@@ -137,21 +137,8 @@
 
 Хотите удалить архивный файл сгенерированным SLM?</value>
   </data>
-  <data name="CreateLibraryDialog" xml:space="preserve">
-    <value>Менеджер библиотеки Steam</value>
-  </data>
-  <data name="CreateLibraryDialogMessage" xml:space="preserve">
-    <value>Выберите тип библиотеки который вы хотите создать в папке:
-{LibraryPath}</value>
-  </data>
-  <data name="CreateLibrary_Exists" xml:space="preserve">
-    <value>Менеджер библиотеки Steam</value>
-  </data>
   <data name="CreateLibrary_ExistsMessage" xml:space="preserve">
     <value>Библиотека уже существует в {LibraryPath}</value>
-  </data>
-  <data name="Steam_Library_Manager" xml:space="preserve">
-    <value>Менеджер библиотеки Steam</value>
   </data>
   <data name="CreateLibrary_RootErrorMessage" xml:space="preserve">
     <value>Библиотеки не могут быть созданы в корне</value>
@@ -190,7 +177,7 @@
 Библиотека: {LibraryFullPath}</value>
   </data>
   <data name="DirectoryNotFoundException" xml:space="preserve">
-    <value>DirectoryNotFoundException</value>
+    <value>Каталог не найден, исключение</value>
   </data>
   <data name="DirectoryNotFoundExceptionMessage" xml:space="preserve">
     <value>[{FolderfullPath}] Папка не может создатся/не найдена. Запустите SLM в качестве Администратора, может помочь.
@@ -208,9 +195,6 @@
   </data>
   <data name="Enums_BackupType" xml:space="preserve">
     <value>Тип резервного копирования</value>
-  </data>
-  <data name="Compress" xml:space="preserve">
-    <value>Сжать</value>
   </data>
   <data name="Enums_Copy" xml:space="preserve">
     <value>Копировать</value>
@@ -281,7 +265,7 @@
   <data name="Forms_LibraryCleaner_Delete" xml:space="preserve">
     <value>Удаление мусорных файлов как вы запросили.</value>
   </data>
-  <data name="Forms_LibraryCleaner_DeleteAll" xml:space="preserve">
+  <data name="DeleteAll" xml:space="preserve">
     <value>Удалить все</value>
   </data>
   <data name="Forms_LibraryCleaner_DeleteSelectedFolders" xml:space="preserve">
@@ -321,7 +305,7 @@
   <data name="Forms_LibraryCleaner_RootPathSelectedMessage" xml:space="preserve">
     <value>Вы уверены что хотите переместить мусор в корень диска?</value>
   </data>
-  <data name="Forms_LibraryView_CreateLibrary" xml:space="preserve">
+  <data name="CreateLibrary_Tooltip" xml:space="preserve">
     <value>Создать библиотеку</value>
   </data>
   <data name="Forms_LibraryView_Offline" xml:space="preserve">
@@ -330,7 +314,7 @@
   <data name="Forms_Main_Discord" xml:space="preserve">
     <value>Discord</value>
   </data>
-  <data name="Forms_Main_Donate" xml:space="preserve">
+  <data name="Donate" xml:space="preserve">
     <value>Поддержать проект</value>
   </data>
   <data name="Forms_Main_SearchInLibrary" xml:space="preserve">
@@ -342,7 +326,7 @@
   <data name="Forms_Main_TabHeader_LibraryCleaner" xml:space="preserve">
     <value>Очистить библиотеку</value>
   </data>
-  <data name="Forms_Main_TabHeader_Settings" xml:space="preserve">
+  <data name="Settings" xml:space="preserve">
     <value>Настройки</value>
   </data>
   <data name="Forms_Main_TabHeader_TaskManager" xml:space="preserve">
@@ -351,8 +335,8 @@
   <data name="Forms_Main_Translate" xml:space="preserve">
     <value>Перевести</value>
   </data>
-  <data name="Forms_Origin" xml:space="preserve">
-    <value>Оригинал</value>
+  <data name="Origin" xml:space="preserve">
+    <value>Origin</value>
   </data>
   <data name="Forms_Quit" xml:space="preserve">
     <value>Выход</value>
@@ -363,29 +347,26 @@
   <data name="Forms_QuitSLMMessage" xml:space="preserve">
     <value>В менеджере задач есть активные задачи. Вы уверены что хотите выйти из SLM? Это может привести к потере данных.</value>
   </data>
-  <data name="Forms_Settings_AdvancedLogging" xml:space="preserve">
-    <value>Расширенный лог (требуется перезапуск)</value>
-  </data>
-  <data name="Forms_Settings_CalculationMethodForArchiveSize" xml:space="preserve">
+  <data name="CalculationMethodForArchiveSize" xml:space="preserve">
     <value>Метод расчета для размера архива</value>
   </data>
-  <data name="Forms_Settings_CheckForUpdates" xml:space="preserve">
+  <data name="CheckForUpdates" xml:space="preserve">
     <value>Проверить наличие обновлений</value>
   </data>
-  <data name="Forms_Settings_CheckForUpdatesOnStartup" xml:space="preserve">
-    <value>Проверять обновление при запуске</value>
+  <data name="CheckForUpdatesAtStartup" xml:space="preserve">
+    <value>Проверить обновления при запуске</value>
   </data>
-  <data name="Forms_Settings_ClearHeaderİmageCache" xml:space="preserve">
+  <data name="ClearHeaderImageCache" xml:space="preserve">
     <value>Очистить кэш изображений</value>
   </data>
   <data name="Forms_Settings_Compress" xml:space="preserve">
     <value>Сжать</value>
   </data>
-  <data name="Forms_Settings_CompressFiles" xml:space="preserve">
+  <data name="CompressFiles" xml:space="preserve">
     <value>Сжимать файлы</value>
   </data>
-  <data name="Forms_Settings_CompressionType" xml:space="preserve">
-    <value>Тип сжатия</value>
+  <data name="CompressionLevel" xml:space="preserve">
+    <value>Уровень сжатия</value>
   </data>
   <data name="Forms_Settings_DoNOTCompress" xml:space="preserve">
     <value>Не сжимать</value>
@@ -396,55 +377,55 @@
   <data name="Forms_Settings_GameListMethod" xml:space="preserve">
     <value>Способ отображения игр</value>
   </data>
-  <data name="Forms_Settings_GeneralSettings" xml:space="preserve">
+  <data name="GeneralSettings" xml:space="preserve">
     <value>Общие настройки</value>
   </data>
   <data name="Forms_Settings_HeaderImageCache" xml:space="preserve">
     <value>Менеджер библиотеки Steam</value>
   </data>
   <data name="Forms_Settings_HeaderImageCacheMessage" xml:space="preserve">
-    <value>Кэш изображений заголовка очищен.</value>
+    <value>Кэш заголовок изображений очищен.</value>
   </data>
-  <data name="Forms_Settings_Language" xml:space="preserve">
+  <data name="Language" xml:space="preserve">
     <value>Язык</value>
   </data>
-  <data name="Forms_Settings_MoveFilesSyncBySize" xml:space="preserve">
+  <data name="MoveFilesSequentiallyIfBiggerThan" xml:space="preserve">
     <value>Переместить файлы синхронно, если больше чем</value>
   </data>
-  <data name="Forms_Settings_OpenLogsFolder" xml:space="preserve">
+  <data name="OpenLogsFolder" xml:space="preserve">
     <value>Открыть папку логов</value>
   </data>
-  <data name="Forms_Settings_PlayASoundOnCompletion" xml:space="preserve">
+  <data name="PlayASoundOnCompletion" xml:space="preserve">
     <value>Воспроизвести звук при завершении</value>
   </data>
   <data name="Forms_Settings_Remove" xml:space="preserve">
     <value>Удалить</value>
   </data>
-  <data name="Forms_Settings_RemoveFiles" xml:space="preserve">
+  <data name="RemoveFilesAtSourceDirectory" xml:space="preserve">
     <value>Удалить файлы в исходном каталоге</value>
   </data>
-  <data name="Report_File_Movement" xml:space="preserve">
+  <data name="ReportFileMovement" xml:space="preserve">
     <value>Сообщить о перемещении файла</value>
   </data>
-  <data name="Keep_searching_on_library_change" xml:space="preserve">
+  <data name="KeepSearchingOnLibraryChange" xml:space="preserve">
     <value>Продолжать поиск при изменении библиотеки</value>
   </data>
-  <data name="Calculation_method_for_games" xml:space="preserve">
+  <data name="CalculationMethodForGames" xml:space="preserve">
     <value>Метод расчета для игр</value>
   </data>
-  <data name="Forms_Settings_SortGamesBy" xml:space="preserve">
+  <data name="SortGamesBy" xml:space="preserve">
     <value>Сортировать игры по</value>
   </data>
-  <data name="Forms_Settings_StartTaskManagerAtStartup" xml:space="preserve">
+  <data name="StartTaskManagerAtStartup" xml:space="preserve">
     <value>Запустить менеджер задач при запуске</value>
   </data>
-  <data name="Forms_Settings_TaskManagerDefaults" xml:space="preserve">
+  <data name="TaskManager" xml:space="preserve">
     <value>Настройки менеджера задач по умолчанию</value>
   </data>
-  <data name="Forms_Settings_ThemeAccent" xml:space="preserve">
-    <value>Акцент темы</value>
+  <data name="ThemeAccent" xml:space="preserve">
+    <value>Цвет темы</value>
   </data>
-  <data name="Forms_Settings_ThemeBase" xml:space="preserve">
+  <data name="ThemeBase" xml:space="preserve">
     <value>Основная тема</value>
   </data>
   <data name="Forms_SLM" xml:space="preserve">
@@ -453,40 +434,37 @@
   <data name="Forms_Steam" xml:space="preserve">
     <value>Steam</value>
   </data>
-  <data name="Forms_TaskManager_AutoInstall" xml:space="preserve">
-    <value>Автоустановка</value>
-  </data>
-  <data name="Forms_TaskManager_CheckForBackupUpdates" xml:space="preserve">
+  <data name="CheckForBackupUpdates" xml:space="preserve">
     <value>Проверить обновления резервной копии</value>
   </data>
-  <data name="Forms_TaskManager_ClearCompletedTasks" xml:space="preserve">
+  <data name="ClearCompletedTasks" xml:space="preserve">
     <value>Очистить завершенные задачи</value>
   </data>
-  <data name="Forms_TaskManager_Completed" xml:space="preserve">
+  <data name="TaskManagerCompleted" xml:space="preserve">
     <value>ЗАВЕРШЕНО</value>
   </data>
-  <data name="Forms_TaskManager_Compress" xml:space="preserve">
-    <value>Сжатие</value>
+  <data name="Compress" xml:space="preserve">
+    <value>Сжать</value>
   </data>
-  <data name="Forms_TaskManager_Delete" xml:space="preserve">
+  <data name="Delete" xml:space="preserve">
     <value>Удалить</value>
   </data>
-  <data name="Forms_TaskManager_Pause" xml:space="preserve">
+  <data name="TaskManagerPause" xml:space="preserve">
     <value>Пауза</value>
   </data>
-  <data name="Forms_TaskManager_RemoveFiles" xml:space="preserve">
+  <data name="Move" xml:space="preserve">
     <value>Удалить исходные файлы</value>
   </data>
-  <data name="Forms_TaskManager_RemoveFromQueue" xml:space="preserve">
+  <data name="TaskManagerRemoveFromQueue" xml:space="preserve">
     <value>Удалить выбранную игру(ы) из очереди</value>
   </data>
   <data name="Forms_TaskManager_ReportFileMovement" xml:space="preserve">
     <value>Сообщить о перемещении файла</value>
   </data>
-  <data name="Forms_TaskManager_Start" xml:space="preserve">
+  <data name="TaskManagerStart" xml:space="preserve">
     <value>Запуск</value>
   </data>
-  <data name="Forms_TaskManager_Stop" xml:space="preserve">
+  <data name="TaskManagerStop" xml:space="preserve">
     <value>Остановить</value>
   </data>
   <data name="MoveGamesConfirmError" xml:space="preserve">
@@ -509,23 +487,20 @@
 
 {ExceptionMessage}</value>
   </data>
-  <data name="OriginApp_CMenu_DeleteFilesSLM" xml:space="preserve">
+  <data name="DeleteFilesUsingSlm" xml:space="preserve">
     <value>Удалить файлы (используя SLM)</value>
   </data>
-  <data name="OriginApp_CMenu_DeleteFilesTM" xml:space="preserve">
+  <data name="DeleteFilesUsingTaskmanager" xml:space="preserve">
     <value>Удалить файлы (используя Менеджер задач)</value>
   </data>
-  <data name="OriginApp_CMenu_DiskInfo" xml:space="preserve">
+  <data name="MenuDiskInfo" xml:space="preserve">
     <value>{AppName} ({SizeOnDisk})</value>
-  </data>
-  <data name="OriginApp_CMenu_Install" xml:space="preserve">
-    <value>Установить</value>
   </data>
   <data name="OriginApp_CMenu_Repair" xml:space="preserve">
     <value>Исправить</value>
   </data>
-  <data name="OriginApp_CMenu_Run" xml:space="preserve">
-    <value>Запуск (Недоступен)</value>
+  <data name="Run" xml:space="preserve">
+    <value>Запуск</value>
   </data>
   <data name="OriginInstallation" xml:space="preserve">
     <value>Установка исходного приложения</value>
@@ -606,17 +581,17 @@
   <data name="RemoveMovedFiles" xml:space="preserve">
     <value>Удалить перемещенные файлы?</value>
   </data>
-  <data name="SteamAppInfo_CompressedArchiveExistsAndInUse" xml:space="preserve">
-    <value>{ArchiveFullPath} используется. Задержка задачи до тех пор пока архив не получит свободу.</value>
+  <data name="CompressedArchiveExistsAndInUse" xml:space="preserve">
+    <value>{ArchiveFullPath} используется. Задача задержится до тех пор пока архив не будет доступен.</value>
   </data>
-  <data name="SteamAppInfo_FileCompressed" xml:space="preserve">
+  <data name="FileCompressed" xml:space="preserve">
     <value>[{AppName}] Файл сжат: {FileNameInArchive}</value>
   </data>
-  <data name="SteamAppInfo_FileDecompressed" xml:space="preserve">
+  <data name="FileDecompressed" xml:space="preserve">
     <value>[{AppName}] Файл распакован: {NewFileFullPath}</value>
   </data>
-  <data name="SteamAppInfo_FormatException" xml:space="preserve">
-    <value>Произошла ошибка при анализе контекстного меню, скорее всего произошло совместный тип на имя цвета.
+  <data name="FormatException" xml:space="preserve">
+    <value>Произошла ошибка при анализе контекстного меню, скорее всего произошло совместный тип на названий цвета.
 
 {ExceptionMessage}</value>
   </data>
@@ -653,18 +628,13 @@
   <data name="SteamApp_RemovingErrorMessage" xml:space="preserve">
     <value>Произошла неизвестная ошибка при удалении файлов приложения. {FullPath}</value>
   </data>
-  <data name="SteamLibrary_CantCreate" xml:space="preserve">
-    <value>Невозможно создать папку Steam библиотеки в: {SteamAppsFolderFullPath}
-
-Попробуйте запустить SLM как администратора.</value>
-  </data>
   <data name="SteamLibrary_CMenu_DeleteGames" xml:space="preserve">
     <value>Удалить игры в библиотеке</value>
   </data>
   <data name="SteamLibrary_CMenu_Open" xml:space="preserve">
     <value>Открыть библиотеку в Проводнике ({LibraryFullPath})</value>
   </data>
-  <data name="SteamLibrary_CMenu_RemoveFromSLM" xml:space="preserve">
+  <data name="RemoveFromSlm" xml:space="preserve">
     <value>Удалить из SLM</value>
   </data>
   <data name="SteamLibrary_CMenu_RemoveFromSteam" xml:space="preserve">
@@ -726,7 +696,7 @@
     <value>[{AppName}] Прошло времени: {ElapsedTime} — Средняя скорость: {AverageSpeed} MB/сек — Средний размер файла: {AverageFileSize}</value>
   </data>
   <data name="TaskManager_Active" xml:space="preserve">
-    <value>[{CurrentTime}] [TaskManager] Менеджер задач теперь активен и ждет задач...</value>
+    <value>[{CurrentTime}] [TaskManager] Менеджер задач запущен и ждет задач...</value>
   </data>
   <data name="TaskManager_AlreadyTasked" xml:space="preserve">
     <value>Менеджер библиотеки Steam</value>
@@ -777,7 +747,7 @@
 Пожалуйста, сначала остановите менеджер задач.</value>
   </data>
   <data name="UnauthorizedAccessException" xml:space="preserve">
-    <value>UnauthorizedAccessException</value>
+    <value>Несанкционированный доступ</value>
   </data>
   <data name="UnauthorizedAccessExceptionMessage" xml:space="preserve">
     <value>[{FullPath}] Произошла ошибка связанная с правами доступа к папке во время создания содержимого библиотеки. Запуск SLM от имени администратора может помочь.
@@ -787,22 +757,22 @@
   <data name="Updater_LatestVersionMessage" xml:space="preserve">
     <value>Вы используете последнюю версию SLM.</value>
   </data>
-  <data name="Forms_LibraryView_CreateLibraryText" xml:space="preserve">
-    <value>Создайте библиотеку Steam, Origin или SLM в выбранном каталоге.</value>
+  <data name="CreateLibrary_Tooltip2" xml:space="preserve">
+    <value>Создайте Steam, Origin или SLM в выбранной папке.</value>
   </data>
-  <data name="Forms_LibraryView_CloseLibrary" xml:space="preserve">
+  <data name="CloseLibrary_Tooltip" xml:space="preserve">
     <value>Закрыть библиотеку</value>
   </data>
-  <data name="Forms_LibraryView_RefreshLibrary" xml:space="preserve">
+  <data name="RefreshLibrary_Tooltip" xml:space="preserve">
     <value>Обновить библиотеку</value>
   </data>
-  <data name="Forms_LibraryView_CloseLibraryText" xml:space="preserve">
-    <value>Удаляет выбранную библиотеку из SLM без касания файлов внутри.</value>
+  <data name="CloseLibrary_Tooltip2" xml:space="preserve">
+    <value>Удаляет выбранную библиотеку из SLM без затрагиваний файлов внутри.</value>
   </data>
-  <data name="Forms_LibraryView_RefreshLibraryText" xml:space="preserve">
+  <data name="RefreshLibrary_Tooltip2" xml:space="preserve">
     <value>Обновляет текущий статус выбранной библиотеки.</value>
   </data>
-  <data name="Forms_LibraryView_CloseLibraryText2" xml:space="preserve">
+  <data name="CloseLibrary_Tooltip3" xml:space="preserve">
     <value>Доступно только для (не главной) библиотек Origin и SLM.</value>
   </data>
   <data name="TaskManagerView_AutoScrollLogs" xml:space="preserve">
@@ -817,52 +787,437 @@
   <data name="Ignored" xml:space="preserve">
     <value>Игнорировано</value>
   </data>
-  <data name="DoubleClickingToAnItemWillOpenItSLocationInFileExplorer" xml:space="preserve">
+  <data name="LibraryCleanerTooltip" xml:space="preserve">
     <value>Двойное нажатие на элемент откроет его местоположение в обозревателе файлов.</value>
   </data>
-  <data name="DeleteAllItems" xml:space="preserve">
+  <data name="DeleteAll_Tooltip" xml:space="preserve">
     <value>Удалить все элементы</value>
   </data>
-  <data name="DeleteAllItems_Description" xml:space="preserve">
+  <data name="Forms_LibraryCleaner_DeleteAll_Tooltip2" xml:space="preserve">
     <value>Попытки удалить каждую папку/файл в данном списке.</value>
   </data>
-  <data name="LibraryCleanerView_MoveAllItems" xml:space="preserve">
+  <data name="Forms_LibraryCleaner_MoveAll_Tooltip" xml:space="preserve">
     <value>Переместить все элементы</value>
   </data>
-  <data name="MoveAllItems_Description" xml:space="preserve">
+  <data name="Forms_LibraryCleaner_MoveAll_Tooltip2" xml:space="preserve">
     <value>Перемещает каждую папку/файл в заданном списке в выбранный путь.</value>
   </data>
-  <data name="RefreshItems" xml:space="preserve">
+  <data name="Forms_LibraryCleaner_RefreshList_Tooltip" xml:space="preserve">
     <value>Обновить элементы</value>
   </data>
-  <data name="RefreshItems_Description" xml:space="preserve">
-    <value>Обновляет список мусорных файлов для Steam библиотек.</value>
-  </data>
-  <data name="ToggleItemList" xml:space="preserve">
-    <value>Переключить список элементов</value>
-  </data>
-  <data name="ToggleItemList_Description" xml:space="preserve">
-    <value>Переключает список элементов между мусорным элементом и игнорируемыми элементами.</value>
+  <data name="Forms_LibraryCleaner_RefreshList_Tooltip2" xml:space="preserve">
+    <value>Обновляет список мусора для библиотек Steam.</value>
   </data>
   <data name="IgnoreSelectedItems" xml:space="preserve">
     <value>Игнорировать выбранный пункт(ы)</value>
-  </data>
-  <data name="CorruptedAcfFile" xml:space="preserve">
-    <value>Повреждённый acf файл</value>
-  </data>
-  <data name="HeadlessFolderNoCorrespondingAcfFile" xml:space="preserve">
-    <value>Папка без заголовка (нет соответствующего acf файла)</value>
-  </data>
-  <data name="HeadlessFileNoCorrespondingİnstallation" xml:space="preserve">
-    <value>Файл без заголовка (Не соответствует установке)</value>
-  </data>
-  <data name="InstallationNotFoundButStateFlagEqualsTo4" xml:space="preserve">
-    <value>Установка не найдена но StateFlag равен 4</value>
   </data>
   <data name="Enabled" xml:space="preserve">
     <value>Включено</value>
   </data>
   <data name="Disabled" xml:space="preserve">
     <value>Отключено</value>
+  </data>
+  <data name="SteamApp_CMenu_ViewStore" xml:space="preserve">
+    <value>Страница магазина</value>
+  </data>
+  <data name="SteamApp_CMenu_GoogleSearch" xml:space="preserve">
+    <value>Поиск в Google</value>
+  </data>
+  <data name="SteamApp_CMenu_YoutubeSearch" xml:space="preserve">
+    <value>Просмотреть на Youtube</value>
+  </data>
+  <data name="SteamApp_CMenu_VerifyFiles" xml:space="preserve">
+    <value>Проверить файлы</value>
+  </data>
+  <data name="HeadlessFolder" xml:space="preserve">
+    <value>Папка без заголовка</value>
+  </data>
+  <data name="HeadlessWorkshopFolder" xml:space="preserve">
+    <value>Папка без заголовка Мастерской</value>
+  </data>
+  <data name="CorruptedDataFile" xml:space="preserve">
+    <value>Повреждённый файл данных</value>
+  </data>
+  <data name="HeadlessDataFile" xml:space="preserve">
+    <value>Файл без заголовка</value>
+  </data>
+  <data name="Enums_Compact" xml:space="preserve">
+    <value>Компактный</value>
+  </data>
+  <data name="Enums_Optimal" xml:space="preserve">
+    <value>Оптимальный</value>
+  </data>
+  <data name="Enums_Fastest" xml:space="preserve">
+    <value>Быстрый</value>
+  </data>
+  <data name="Enums_Store" xml:space="preserve">
+    <value>Магазин</value>
+  </data>
+  <data name="CreateLibraryButton_Click_DirectoryIsNotSelectedForLibraryCreation" xml:space="preserve">
+    <value>Каталог не выбран для создания библиотеки.</value>
+  </data>
+  <data name="CreateLibraryButton_Click_LibraryTypeIsNotSelectedForLibraryCreation" xml:space="preserve">
+    <value>Тип библиотеки не выбран для создания библиотеки.</value>
+  </data>
+  <data name="CreateLibraryButton_Click_SelectedDirectoryDoesNotExistsLibraryPath" xml:space="preserve">
+    <value>Выбранный каталог не существует: {libraryPath}</value>
+  </data>
+  <data name="CreateLibraryButton_Click_SteamLibrarySupportMustBeEnabledForThisAction" xml:space="preserve">
+    <value>Для этого действия должна быть включена поддержка Steam Library.</value>
+  </data>
+  <data name="CreateLibraryButton_Click_OriginLibrarySupportMustBeEnabledForThisAction" xml:space="preserve">
+    <value>Для этого действия должна быть включена поддержка Origin Library.</value>
+  </data>
+  <data name="CreateLibraryButton_Click_UplayLibrarySupportMustBeEnabledForThisAction" xml:space="preserve">
+    <value>Для этого действия должна быть включена поддержка Uplay Library.</value>
+  </data>
+  <data name="Forms_Main_DonateDescription" xml:space="preserve">
+    <value>Открывает веб-страницу с доступными методами пожертвования. Спасибо за вашу поддержку!</value>
+  </data>
+  <data name="TranslateSLM" xml:space="preserve">
+    <value>Перевести SLM</value>
+  </data>
+  <data name="TranslateSLMDescription" xml:space="preserve">
+    <value>Открывает страницу проекта Crowdin по SLM которую вы можете внести в перевод SLM.</value>
+  </data>
+  <data name="Main_DiscordGroup" xml:space="preserve">
+    <value>Группа Discord</value>
+  </data>
+  <data name="Main_DiscordGroupDescription" xml:space="preserve">
+    <value>Открывает ссылку приглашения для Discord Group в SLM в вашем любимом веб-браузере.</value>
+  </data>
+  <data name="Main_SelectedPath" xml:space="preserve">
+    <value>Выбранный путь:</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Выбрать</value>
+  </data>
+  <data name="LibraryType" xml:space="preserve">
+    <value>Тип библиотеки</value>
+  </data>
+  <data name="LibraryTypeDescription" xml:space="preserve">
+    <value>Выберите тип библиотеки которую вы хотите создать.</value>
+  </data>
+  <data name="SelectedLibraryType" xml:space="preserve">
+    <value>Выбранный тип библиотеки:</value>
+  </data>
+  <data name="SortGamesBy_Tooltip" xml:space="preserve">
+    <value>Метод сортировки для игровой панели</value>
+  </data>
+  <data name="SortGamesBy_Tooltip2" xml:space="preserve">
+    <value>Позволяет выбрать метод сортировки для игровой панели.</value>
+  </data>
+  <data name="ViewMethodForGamePanel" xml:space="preserve">
+    <value>Метод просмотра для игровой панели</value>
+  </data>
+  <data name="ViewMethodForGamePanelDesc" xml:space="preserve">
+    <value>Позволяет переключаться между сеткой и списком для игровой панели</value>
+  </data>
+  <data name="SearchFor" xml:space="preserve">
+    <value>Поиск...</value>
+  </data>
+  <data name="SearchForDesc" xml:space="preserve">
+    <value>Позволяет искать игру по ее названию или приложению.</value>
+  </data>
+  <data name="Compacted" xml:space="preserve">
+    <value>Компактный</value>
+  </data>
+  <data name="AppPanel_Desc1" xml:space="preserve">
+    <value>Двойное нажатие на элемент откроет его местоположение в обозревателе файлов.</value>
+  </data>
+  <data name="AppPanel_Desc2" xml:space="preserve">
+    <value>Чтобы скопировать/переместить игру в другую библиотеку, просто перетащите элемент в целевую библиотеку.</value>
+  </data>
+  <data name="AppPanel_Desc3" xml:space="preserve">
+    <value>Можно выбрать/задавать несколько элементов.</value>
+  </data>
+  <data name="HamburgerMenuControl_AllAvailable" xml:space="preserve">
+    <value>Все доступные</value>
+  </data>
+  <data name="SteamSLM" xml:space="preserve">
+    <value>Steam и SLM</value>
+  </data>
+  <data name="Uplay" xml:space="preserve">
+    <value>Uplay</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Главная</value>
+  </data>
+  <data name="JunkItems" xml:space="preserve">
+    <value>Элементы мусора</value>
+  </data>
+  <data name="DuplicateItems" xml:space="preserve">
+    <value>Дублировать элементы</value>
+  </data>
+  <data name="IgnoredItems" xml:space="preserve">
+    <value>Игнорируемые элементы</value>
+  </data>
+  <data name="RemoveFromIgnoreList" xml:space="preserve">
+    <value>Удалить из черного списка</value>
+  </data>
+  <data name="RemoveFromIgnoreList_Tooltip" xml:space="preserve">
+    <value>Удалить из черного списка</value>
+  </data>
+  <data name="RemoveFromIgnoreList_Tooltip2" xml:space="preserve">
+    <value>Удалить перечисленные элементы из игнорируемого списка</value>
+  </data>
+  <data name="DeleteAll_Tooltip2" xml:space="preserve">
+    <value>Каждый элемент/папка перечисленная здесь будет УДАЛЕНА. Используйте с осторожностью!</value>
+  </data>
+  <data name="LibraryPanel_Tooltip" xml:space="preserve">
+    <value>Двойное нажатие на элемент откроет его местоположение в обозревателе файлов.</value>
+  </data>
+  <data name="CalculationMethodForGames_Tooltip" xml:space="preserve">
+    <value>Метод расчета размера для игр</value>
+  </data>
+  <data name="CalculationMethodForGames_Tooltip2" xml:space="preserve">
+    <value>ACF использует информацию о размерах предоставленную файлом манифеста приложения</value>
+  </data>
+  <data name="CalculationMethodForGames_Tooltip3" xml:space="preserve">
+    <value>Перечисление, перечислите каждый файл и папку, чтобы получить правильную информацию о размере (Медленно)</value>
+  </data>
+  <data name="CalculationMethodForArchiveSize_Tooltip" xml:space="preserve">
+    <value>Метод расчета размера для сжатых архивов</value>
+  </data>
+  <data name="CalculationMethodForArchiveSize_Tooltip2" xml:space="preserve">
+    <value>Размер архива использует размер сжатого архива.</value>
+  </data>
+  <data name="CalculationMethodForArchiveSize_Tooltip3" xml:space="preserve">
+    <value>Размер файла в архиве перечисляет каждый файл в архиве чтобы получить правильную информацию о размере (Медленно)</value>
+  </data>
+  <data name="CompressionLevel_Tooltip" xml:space="preserve">
+    <value>Уровень сжатия используемый для сжатия файлов игры.</value>
+  </data>
+  <data name="ThemeAccent_Tooltip" xml:space="preserve">
+    <value>Предпочтительный цвет темы для использования с SLM.</value>
+  </data>
+  <data name="ThemeBase_Tooltip" xml:space="preserve">
+    <value>Предпочтительные базовые цвета тем для использования с SLM.</value>
+  </data>
+  <data name="CheckForUpdatesAtStartup_Tooltip" xml:space="preserve">
+    <value>Попытки нового контроля версий при запуске.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Да</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Нет</value>
+  </data>
+  <data name="KeepSearchingOnLibraryChange_Tooltip" xml:space="preserve">
+    <value>Сохраняет поиск текста и поиск текста в новой выбранной библиотеке если активен.</value>
+  </data>
+  <data name="CompactStatusDetection" xml:space="preserve">
+    <value>Компактное обнаружение статуса</value>
+  </data>
+  <data name="CompactStatusDetection_Tooltip" xml:space="preserve">
+    <value>Получает компактный статус для установленных игр.</value>
+  </data>
+  <data name="AdvancedCompactSizeDetection" xml:space="preserve">
+    <value>Расширенный компактный размер обнаружения</value>
+  </data>
+  <data name="AdvancedCompactSizeDetection_Tooltip" xml:space="preserve">
+    <value>Получает правильный размер на диске запустив компактную команду для папок.</value>
+  </data>
+  <data name="AdvancedCompactSizeDetection_Tooltip2" xml:space="preserve">
+    <value>Огромное влияние на производительность!</value>
+  </data>
+  <data name="Language_Tooltip" xml:space="preserve">
+    <value>Язык по умолчанию для использования с SLM.</value>
+  </data>
+  <data name="SteamUserID64" xml:space="preserve">
+    <value>Steam UserID64 для использования с SLM</value>
+  </data>
+  <data name="SteamUserID64_Tooltip" xml:space="preserve">
+    <value>Если выбрано, SLM будет пытаться получить последнюю информацию о дате игры для игр из конфигурационного файла Steam.</value>
+  </data>
+  <data name="MoveFilesSequentiallyIfBiggerThan_Tooltip" xml:space="preserve">
+    <value>Перемещать файлы размером более (X) МБ последовательно</value>
+  </data>
+  <data name="MoveFilesSequentiallyIfBiggerThan_Tooltip2" xml:space="preserve">
+    <value>SLM перемещает файлы параллельно для лучшей производительности, но для больших файлов он может понижать производительность и может быть лучше перемещаться последовательно.</value>
+  </data>
+  <data name="DefaultCompactLevel" xml:space="preserve">
+    <value>Компактный уровень по умолчанию</value>
+  </data>
+  <data name="DefaultCompactLevel_Tooltip" xml:space="preserve">
+    <value>Уровень сжатия по умолчанию для компактных задач.</value>
+  </data>
+  <data name="DefaultCompactLevel_Tooltip2" xml:space="preserve">
+    <value>XPRESS4K = Быстрый, но самый слабый</value>
+  </data>
+  <data name="DefaultCompactLevel_Tooltip3" xml:space="preserve">
+    <value>XPRESS8K = Сбалансированный</value>
+  </data>
+  <data name="DefaultCompactLevel_Tooltip4" xml:space="preserve">
+    <value>XPRESS16K = Медленнее, но эффективнее</value>
+  </data>
+  <data name="DefaultCompactLevel_Tooltip5" xml:space="preserve">
+    <value>LZX = Самый медленный, самый эффективный с высокими накладными расходами</value>
+  </data>
+  <data name="OpenLogsFolder_Tooltip" xml:space="preserve">
+    <value>SLM попытается открыть /logs/ папку в обозревателе файлов, если таковая существует.</value>
+  </data>
+  <data name="CheckForUpdates_Tooltip" xml:space="preserve">
+    <value>SLM попытается проверить наличие обновлений, чтобы узнать, есть ли новая версия.</value>
+  </data>
+  <data name="ClearHeaderImageCache_Tooltip" xml:space="preserve">
+    <value>SLM попытается очистить кэш для изображений заголовок игры, кэшируемых в папке /.slmcache/</value>
+  </data>
+  <data name="RemoveFilesAtSourceDirectory_Tooltip" xml:space="preserve">
+    <value>Если выбрано и задача успешно завершена (сначала скопируйте, а затем удалите), SLM удалит скопированные файлы из источника. Эта опция может быть изменена для каждой задачи.</value>
+  </data>
+  <data name="CompressFiles_Tooltip" xml:space="preserve">
+    <value>Если выбрано, SLM будет сжимать файлы. Эта опция может быть изменена для каждой задачи.</value>
+  </data>
+  <data name="ReportFileMovement_Tooltip" xml:space="preserve">
+    <value>Если выбрано, SLM будет сообщать о состоянии перемещения файла для просмотра журнала в диспетчере задач. Эта опция может быть изменена для каждой задачи.</value>
+  </data>
+  <data name="FileTransferMethod" xml:space="preserve">
+    <value>Метод передачи файлов</value>
+  </data>
+  <data name="StartTaskManagerAtStartup_Tooltip" xml:space="preserve">
+    <value>Если включено, Менеджер Задач будет запущен при запуске.</value>
+  </data>
+  <data name="PlayASoundOnCompletion_Tooltip" xml:space="preserve">
+    <value>Воспроизвести звук в завершение очереди Менеджера Задач</value>
+  </data>
+  <data name="PlayASoundOnCompletion_Tooltip2" xml:space="preserve">
+    <value>SLM попытается воспроизвести звук (восклицательный знак Windows или файл в ключе настройки CustomSoundFile) в очереди менеджер задач когда завершится.</value>
+  </data>
+  <data name="SteamLibrarySupport" xml:space="preserve">
+    <value>Поддержка библиотеки Steam</value>
+  </data>
+  <data name="SteamLibrarySupport_Tooltip" xml:space="preserve">
+    <value>Включает/отключает функциональность Steam Library для SLM</value>
+  </data>
+  <data name="OriginLibrarySupport" xml:space="preserve">
+    <value>Поддержка библиотеки Origin</value>
+  </data>
+  <data name="OriginLibrarySupport_Tooltip" xml:space="preserve">
+    <value>Включить/отключить функциональность Origin Library для SLM</value>
+  </data>
+  <data name="UplayLibrarySupport" xml:space="preserve">
+    <value>Поддержка библиотеки Uplay</value>
+  </data>
+  <data name="UplayLibrarySupport_Tooltip" xml:space="preserve">
+    <value>Включает/отключает функциональность Uplay Library для SLM</value>
+  </data>
+  <data name="Compact" xml:space="preserve">
+    <value>Компактный</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="AutoInstall" xml:space="preserve">
+    <value>Автоустановка</value>
+  </data>
+  <data name="CompactForceCompress" xml:space="preserve">
+    <value>Принудительно сжать</value>
+  </data>
+  <data name="TaskPanel_Tooltip" xml:space="preserve">
+    <value>Двойное нажатие на задачу откроет его местоположение в обозревателе файлов.</value>
+  </data>
+  <data name="StartTaskManager" xml:space="preserve">
+    <value>Запустить менеджер задач</value>
+  </data>
+  <data name="StartTaskManager_Tooltip" xml:space="preserve">
+    <value>Запустит диспетчер задач. Диспетчер задач будет обрабатывать поставленные в очередь элементы или ждать новых элементов.</value>
+  </data>
+  <data name="PauseTaskManager" xml:space="preserve">
+    <value>Пауза менеджера задач</value>
+  </data>
+  <data name="PauseTaskManager_Tooltip" xml:space="preserve">
+    <value>Приостановка обработки задач и активных задач.</value>
+  </data>
+  <data name="StopTaskManager" xml:space="preserve">
+    <value>Остановить менеджер задач</value>
+  </data>
+  <data name="StopTaskManager_Tooltip" xml:space="preserve">
+    <value>Останавливает диспетчер задач и отменяет активную задачу.</value>
+  </data>
+  <data name="ClearCompletedTasks_Tooltip" xml:space="preserve">
+    <value>Удалит выполненные задачи из списка задач.</value>
+  </data>
+  <data name="CheckForBackupUpdates_Tooltip" xml:space="preserve">
+    <value>Будет сравнивать игры в библиотеках SLM с библиотеками Steam, чтобы выяснить, есть ли какие-либо доступные обновления.</value>
+  </data>
+  <data name="TaskManagerView_AutoScrollLogs_Tooltip" xml:space="preserve">
+    <value>SLM автоматически прокручивает журналы в окне журналов. Он может заморозить пользовательский интерфейс, если перемещено много мелких файлов.</value>
+  </data>
+  <data name="TaskManagerView_AutoClearCompletedTasks_Tooltip" xml:space="preserve">
+    <value>SLM удалит выполненные задачи из диспетчера задач.</value>
+  </data>
+  <data name="TaskManagerView_ContinueOnError" xml:space="preserve">
+    <value>Продолжить при ошибке</value>
+  </data>
+  <data name="TaskManagerView_ContinueOnError_Tooltip" xml:space="preserve">
+    <value>Если активен, SLM перейдет к следующей задаче в списке в случае ошибки с активной задачей.</value>
+  </data>
+  <data name="TaskManagerView_SkipSteamRestartDialog" xml:space="preserve">
+    <value>Пропустить диалог перезапуска Steam</value>
+  </data>
+  <data name="TaskManagerView_SkipSteamRestartDialog_Tooltip" xml:space="preserve">
+    <value>Если активен, SLM не будет запрашивать перезапуск Steam при выполнении задач, связанных с библиотекой Steam.</value>
+  </data>
+  <data name="TaskManagerView_SkipSteamRestartDialog_Tooltip2" xml:space="preserve">
+    <value>Однако запуск приложений/игр Steam без перезапуска Steam может (и может) повредить установки приложений/игр и потребует ручной обработки!</value>
+  </data>
+  <data name="SteamLibraryManagerInstallationWizard" xml:space="preserve">
+    <value>Менеджер библиотеки Steam: Мастер установки</value>
+  </data>
+  <data name="Welcome_Text" xml:space="preserve">
+    <value>Этот мастер установки поможет вам установить основы SLM для первого использования. Пожалуйста, начните с выбора языка по умолчанию, темы и цвета.</value>
+  </data>
+  <data name="Welcome_Text2" xml:space="preserve">
+    <value>Кроме того, вы можете закрыть это окно, чтобы использовать параметры по умолчанию для SLM.</value>
+  </data>
+  <data name="InstallationWizard_Completed" xml:space="preserve">
+    <value>Установка завершена!</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="CompactDirectoryNotExists" xml:space="preserve">
+    <value>Каталог не существует !? - {DirectoryFullName}</value>
+  </data>
+  <data name="Compact_CompressingFile" xml:space="preserve">
+    <value>Сжатие файла: {fileName}</value>
+  </data>
+  <data name="Compact_TaskCompletedIn" xml:space="preserve">
+    <value>[{AppName}] Компактная задача завершена в {TimeElapsed}</value>
+  </data>
+  <data name="OriginUpdateAppListException" xml:space="preserve">
+    <value>Произошла ошибка при обновлении списка игр для библиотеки Origin: {FullPath}
+    {ex}</value>
+  </data>
+  <data name="Uplay_UpdateAppListError" xml:space="preserve">
+    <value>Произошла ошибка при обновлении списка игр для библиотеки Uplay: {FullPath}
+    {ex}</value>
+  </data>
+  <data name="CantUnloadLibraryWithActiveTask" xml:space="preserve">
+    <value>Невозможно выгрузить библиотеки {targetLibraryType}, пока есть активная задача.</value>
+  </data>
+  <data name="Uplay_Open" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="Install" xml:space="preserve">
+    <value>Установить</value>
+  </data>
+  <data name="SteamAppsFolderNotExists" xml:space="preserve">
+    <value>Папка SteamApps не существует в: {SteamAppsFolderFullPath}</value>
+  </data>
+  <data name="Uplay_UnauthorizedAccessExceptionTitle" xml:space="preserve">
+    <value>Несанкционированный доступ при установке Uplay игры</value>
+  </data>
+  <data name="Uplay_UnauthorizedAccessExceptionMessage" xml:space="preserve">
+    <value>Исключение неавторизованного доступа при попытке обновить реестр для установки игры Uplay: {AppName}
+
+SLM должен быть запущен от имени администратора для этого процесса.
+
+В качестве альтернативы; Вы можете использовать функцию «Найти игру» в Uplay.
+{ExceptionMessage}</value>
+  </data>
+  <data name="LibrarySettings" xml:space="preserve">
+    <value>Настройки библиотеки</value>
   </data>
 </root>

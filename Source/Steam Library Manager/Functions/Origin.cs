@@ -1,9 +1,17 @@
-﻿using System;
-using System.IO;
+﻿using Alphaleonis.Win32.Filesystem;
+using Dasync.Collections;
+using MahApps.Metro.Controls.Dialogs;
+using MahApps.Metro.IconPacks;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Xml.Linq;
+using SearchOption = System.IO.SearchOption;
+using Stream = System.IO.Stream;
 
 namespace Steam_Library_Manager.Functions
 {
@@ -19,7 +27,7 @@ namespace Steam_Library_Manager.Functions
             {
                 Header = SLM.Translate(nameof(Properties.Resources.OriginLibrary_CMenu_Open)),
                 Action = "Disk",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.FolderOpen
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.FolderOpen, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -31,9 +39,8 @@ namespace Steam_Library_Manager.Functions
             {
                 Header = SLM.Translate(nameof(Properties.Resources.OriginLibrary_CMenu_RemoveFromSLM)),
                 Action = "remove",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.Remove,
-                ShowToNormal = false,
-                ShowToSLMBackup = false
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.PlaylistRemove, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) },
+                ShowToNormal = false
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -50,10 +57,21 @@ namespace Steam_Library_Manager.Functions
             // Run
             var menuItem = new Definitions.ContextMenuItem
             {
-                Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_Run)),
+                Header = SLM.Translate(nameof(Properties.Resources.Run)),
                 Action = "steam://run/{0}", // TO-DO
-                Icon = FontAwesome.WPF.FontAwesomeIcon.Play,
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.Play, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) },
                 ShowToCompressed = false
+            };
+
+            menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
+            Definitions.List.AppCMenuItems.Add(menuItem);
+
+            // Compress
+            menuItem = new Definitions.ContextMenuItem
+            {
+                Header = SLM.Translate(nameof(Properties.Resources.Compress)),
+                Action = "compress",
+                Icon = new PackIconOcticons() { Kind = PackIconOcticonsKind.FileZip, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -62,10 +80,10 @@ namespace Steam_Library_Manager.Functions
             // Compact
             menuItem = new Definitions.ContextMenuItem
             {
-                Header = "Compact",
+                Header = SLM.Translate(nameof(Properties.Resources.Compact)),
                 Action = "compact",
                 ShowToCompressed = false,
-                Icon = FontAwesome.WPF.FontAwesomeIcon.FileArchiveOutline
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.ArrowCollapse, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -84,9 +102,9 @@ namespace Steam_Library_Manager.Functions
             // Install
             menuItem = new Definitions.ContextMenuItem
             {
-                Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_Install)),
+                Header = SLM.Translate(nameof(Properties.Resources.Install)),
                 Action = "install",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.Gear,
+                Icon = new PackIconEntypo() { Kind = PackIconEntypoKind.Install, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) },
                 ShowToCompressed = false
             };
 
@@ -98,7 +116,7 @@ namespace Steam_Library_Manager.Functions
             {
                 Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_Repair)),
                 Action = "repair",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.Gears,
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.FileCheck, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) },
                 ShowToCompressed = false
             };
 
@@ -118,9 +136,9 @@ namespace Steam_Library_Manager.Functions
             // Show on disk
             menuItem = new Definitions.ContextMenuItem
             {
-                Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_DiskInfo)),
+                Header = SLM.Translate(nameof(Properties.Resources.MenuDiskInfo)),
                 Action = "Disk",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.FolderOpen
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.FolderOpen, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -129,7 +147,6 @@ namespace Steam_Library_Manager.Functions
             // Separator
             menuItem = new Definitions.ContextMenuItem
             {
-                ShowToCompressed = false,
                 IsSeparator = true
             };
 
@@ -139,9 +156,9 @@ namespace Steam_Library_Manager.Functions
             // Delete files (using SLM)
             menuItem = new Definitions.ContextMenuItem
             {
-                Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_DeleteFilesSLM)),
+                Header = SLM.Translate(nameof(Properties.Resources.DeleteFilesUsingSlm)),
                 Action = "deleteappfiles",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.TrashOutline
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.Delete, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -150,9 +167,9 @@ namespace Steam_Library_Manager.Functions
             // Delete files (using Task Manager)
             menuItem = new Definitions.ContextMenuItem
             {
-                Header = SLM.Translate(nameof(Properties.Resources.OriginApp_CMenu_DeleteFilesTM)),
+                Header = SLM.Translate(nameof(Properties.Resources.DeleteFilesUsingTaskmanager)),
                 Action = "deleteappfilestm",
-                Icon = FontAwesome.WPF.FontAwesomeIcon.Trash
+                Icon = new PackIconMaterial() { Kind = PackIconMaterialKind.DeleteSweep, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Foreground = new SolidColorBrush((Color)MahApps.Metro.ThemeManager.DetectAppStyle(Application.Current).Item2.Resources["AccentColor"]) }
             };
 
             menuItem.AllowedLibraryTypes.Add(Definitions.Enums.LibraryType.Origin);
@@ -161,7 +178,7 @@ namespace Steam_Library_Manager.Functions
             #endregion App Context Menu Item Definitions
         }
 
-        public static void GenerateLibraryList()
+        public static async Task GenerateLibraryListAsync()
         {
             try
             {
@@ -170,21 +187,46 @@ namespace Steam_Library_Manager.Functions
                 {
                     var originConfigKeys = XDocument.Load(Definitions.Global.Origin.ConfigFilePath).Root?.Elements().ToDictionary(a => (string)a.Attribute("key"), a => (string)a.Attribute("value"));
 
-                    if (originConfigKeys.Count(x => x.Key == "DownloadInPlaceDir") == 0)
+                    if (originConfigKeys?.Count(x => x.Key == "DownloadInPlaceDir") == 0)
                     {
                         Logger.Log(NLog.LogLevel.Error, Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.Origin_MissingKey)), new { OriginConfigFilePath = Definitions.Global.Origin.ConfigFilePath }));
                     }
                     else
                     {
-                        if (Directory.Exists(originConfigKeys["DownloadInPlaceDir"]))
+                        if (Directory.Exists(originConfigKeys?["DownloadInPlaceDir"]))
                         {
-                            AddNewAsync(originConfigKeys["DownloadInPlaceDir"], true);
+                            AddNewLibraryAsync(originConfigKeys?["DownloadInPlaceDir"], true);
                         }
                         else
                         {
                             Logger.Info(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.Origin_DirectoryNotExists)), new { NotFoundDirectoryFullPath = originConfigKeys["DownloadInPlaceDir"] }));
                         }
                     }
+                }
+
+                if (Directory.Exists(Definitions.Directories.Origin.LocalContentDirectory))
+                {
+                    await Directory.EnumerateFiles(Definitions.Directories.Origin.LocalContentDirectory, "*.mfst", SearchOption.AllDirectories).ParallelForEachAsync(originApp =>
+                        {
+                            var appId = Path.GetFileNameWithoutExtension(originApp);
+
+                            if (!appId.StartsWith("Origin"))
+                            {
+                                // Get game id by fixing file via adding : before integer part of the name
+                                // for example OFB-EAST52017 converts to OFB-EAST:52017
+                                var match = System.Text.RegularExpressions.Regex.Match(appId, @"^(.*?)(\d+)$");
+                                if (!match.Success)
+                                {
+                                    return Task.CompletedTask;
+                                }
+
+                                appId = match.Groups[1].Value + ":" + match.Groups[2].Value;
+                            }
+
+                            Definitions.Global.Origin.AppIds.Add(new KeyValuePair<string, string>(new FileInfo(originApp).Directory.Name, appId));
+
+                            return Task.CompletedTask;
+                        });
                 }
             }
             catch (Exception ex)
@@ -193,7 +235,7 @@ namespace Steam_Library_Manager.Functions
             }
         }
 
-        public static async void AddNewAsync(string libraryPath, bool isMainLibrary = false)
+        public static async void AddNewLibraryAsync(string libraryPath, bool isMainLibrary = false)
         {
             try
             {
@@ -202,15 +244,11 @@ namespace Steam_Library_Manager.Functions
                     libraryPath += Path.DirectorySeparatorChar;
                 }
 
-                var newLibrary = new Definitions.OriginLibrary(libraryPath, isMainLibrary)
-                {
-                    Type = Definitions.Enums.LibraryType.Origin,
-                    DirectoryInfo = new DirectoryInfo(libraryPath)
-                };
+                var newLibrary = new Definitions.OriginLibrary(libraryPath, isMainLibrary);
 
                 Definitions.List.LibraryProgress.Report(newLibrary);
 
-                await Task.Run((Action) newLibrary.UpdateAppListAsync).ConfigureAwait(true);
+                await Task.Run(newLibrary.UpdateAppList).ConfigureAwait(true);
             }
             catch (Exception ex)
             {
@@ -222,20 +260,177 @@ namespace Steam_Library_Manager.Functions
         {
             try
             {
-                newLibraryPath = newLibraryPath.ToLowerInvariant();
+                if (!newLibraryPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                {
+                    newLibraryPath += Path.DirectorySeparatorChar;
+                }
 
-                return Definitions.List.Libraries.Count(x =>
-                 x.Type == Definitions.Enums.LibraryType.Origin
-                 && (
-                     x.FullPath.ToLowerInvariant() == newLibraryPath
-                 )
-                ) > 0;
+                return Definitions.List.Libraries.Count(x => x.Type == Definitions.Enums.LibraryType.Origin && string.Equals(x.FullPath, newLibraryPath, StringComparison.InvariantCultureIgnoreCase)) > 0;
             }
             // In any error return true to prevent possible bugs
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
                 return true;
+            }
+        }
+
+        public static async Task ParseAppDetailsAsync(Stream fileStream, string installerFilePath, Definitions.OriginLibrary library, bool isCompressed = false)
+        {
+            try
+            {
+                if (!isCompressed && new FileInfo(installerFilePath).Directory.Parent.Parent.Name != new DirectoryInfo(library.FullPath).Name)
+                    return;
+
+                var installerLog = Path.Combine(Directory.GetParent(installerFilePath).FullName, "InstallLog.txt");
+                var installedLocale = "en_US";
+
+                if (!isCompressed && File.Exists(installerLog))
+                {
+                    foreach (var line in File.ReadAllLines(installerLog))
+                    {
+                        if (!line.Contains("Install Locale:")) continue;
+
+                        installedLocale = line.Split(new string[] { "Install Locale:" },
+                            StringSplitOptions.None)[1];
+                        break;
+                    }
+
+                    installedLocale = installedLocale.Replace(" ", "");
+                }
+
+                var xml = XDocument.Load(fileStream);
+                var manifestVersion = new Version((xml.Root.Name.LocalName == "game")
+                    ? xml.Root.Attribute("manifestVersion").Value
+                    : ((xml.Root.Name.LocalName == "DiPManifest")
+                        ? xml.Root.Attribute("version").Value
+                        : "1.0"));
+
+                Definitions.OriginAppInfo originAppInfo = null;
+
+                if (manifestVersion == new Version("4.0"))
+                {
+                    originAppInfo = new Definitions.OriginAppInfo(library,
+                        xml.Root.Element("gameTitles")?.Elements("gameTitle")
+                            ?.First(x => x.Attribute("locale").Value == "en_US")?.Value,
+                        Convert.ToInt32(xml.Root.Element("contentIDs")?.Elements()
+                            .FirstOrDefault(x => int.TryParse(x.Value, out int appId))?.Value),
+                        (isCompressed) ? new FileInfo(installerFilePath).Directory : new FileInfo(installerFilePath).Directory.Parent,
+                        new Version(xml.Root.Element("buildMetaData")?.Element("gameVersion")
+                            ?.Attribute("version")?.Value),
+                        xml.Root.Element("installMetaData")?.Element("locales")?.Value.Split(','),
+                        installedLocale,
+                        isCompressed,
+                        xml.Root.Element("touchup")?.Element("filePath")?.Value,
+                        xml.Root.Element("touchup")?.Element("parameters")?.Value,
+                        xml.Root.Element("touchup")?.Element("updateParameters")?.Value,
+                        xml.Root.Element("touchup")?.Element("repairParameters")?.Value);
+                }
+                else if (manifestVersion >= new Version("1.1") && manifestVersion <= new Version("3.0"))
+                {
+                    var locales = new List<string>();
+                    foreach (var locale in xml.Root.Element("metadata")?.Elements("localeInfo")
+                        ?.Attributes()?.Where(x => x.Name == "locale"))
+                    {
+                        locales.Add(locale.Value);
+                    }
+
+                    originAppInfo = new Definitions.OriginAppInfo(library,
+                        xml.Root.Element("metadata")?.Elements("localeInfo")
+                            ?.First(x => x.Attribute("locale").Value == "en_US")?.Element("title").Value,
+                        Convert.ToInt32(xml.Root.Element("contentIDs")?.Element("contentID")?.Value
+                            .Replace("EAX", "")),
+                        (isCompressed) ? new FileInfo(installerFilePath).Directory : new FileInfo(installerFilePath).Directory.Parent,
+                        new Version(xml.Root.Attribute("gameVersion").Value),
+                        locales.ToArray(),
+                        installedLocale,
+                        isCompressed,
+                        xml.Root.Element("executable")?.Element("filePath")?.Value,
+                        xml.Root.Element("executable")?.Element("parameters")?.Value);
+                }
+                else
+                {
+                    MessageBox.Show(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.OriginUnknownManifestFile)), new { ManifestVersion = manifestVersion, OriginApp = installerFilePath }));
+                    return;
+                }
+
+                if (Definitions.Global.Origin.AppIds.Count(x => x.Key == originAppInfo.InstallationDirectory.Name) > 0)
+                {
+                    var appId = Definitions.Global.Origin.AppIds.First(x => x.Key == originAppInfo.InstallationDirectory.Name);
+
+                    var appLocalData = library.GetGameLocalData(appId.Value);
+
+                    if (appLocalData != null)
+                    {
+                        await Framework.CachedImage.FileCache.HitAsync(string.Concat(appLocalData["customAttributes"]["imageServer"],
+                                appLocalData["localizableAttributes"]["packArtLarge"])
+                            , $"{originAppInfo.AppId}_o")
+                            .ConfigureAwait(false);
+                    }
+                }
+
+                originAppInfo.GameHeaderImage = $"{Definitions.Directories.SLM.Cache}\\{originAppInfo.AppId}_o.jpg";
+
+                library.Apps.Add(originAppInfo);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                Logger.Error(ex);
+            }
+        }
+
+        public static async void CheckForBackupUpdatesAsync()
+        {
+            try
+            {
+                if (Definitions.List.Libraries.Count(x => x.Type == Definitions.Enums.LibraryType.Origin && x.DirectoryInfo.Exists) == 0)
+                {
+                    return;
+                }
+
+                var progressInformationMessage = await Main.FormAccessor.ShowProgressAsync(SLM.Translate(nameof(Properties.Resources.PleaseWait)), SLM.Translate(nameof(Properties.Resources.Steam_CheckForBackupUpdates))).ConfigureAwait(true);
+                progressInformationMessage.SetIndeterminate();
+
+                foreach (var currentLibrary in Definitions.List.Libraries.Where(x => x.Type == Definitions.Enums.LibraryType.Origin && x.DirectoryInfo.Exists).ToList())
+                {
+                    if (currentLibrary.Apps.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (var libraryToCheck in Definitions.List.Libraries.Where(x => x != currentLibrary && x.Type == Definitions.Enums.LibraryType.Origin))
+                    {
+                        foreach (var currentApp in currentLibrary.Apps.Where(x => !x.IsCompressed).ToList())
+                        {
+                            progressInformationMessage.SetMessage(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.Steam_CheckForBackupUpdates_Progress)), new { CurrentAppName = currentApp.AppName }));
+
+                            foreach (var latestApp in libraryToCheck.Apps.Where(x => x.AppId == currentApp.AppId && x.LastUpdated > currentApp.LastUpdated && !x.IsCompressed))
+                            {
+                                if (TaskManager.TaskList.Count(x =>
+                                        x.App.AppId == currentApp.AppId && !x.Completed &&
+                                        (x.TargetLibrary == latestApp.Library ||
+                                         x.TargetLibrary == currentApp.Library)) != 0) continue;
+
+                                var newTask = new Definitions.List.TaskInfo
+                                {
+                                    App = latestApp,
+                                    TargetLibrary = currentApp.Library,
+                                    TaskType = Definitions.Enums.TaskType.Copy
+                                };
+
+                                TaskManager.AddTask(newTask);
+                                Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.Steam_CheckForBackupUpdates_UpdateFound)), new { CurrentTime = DateTime.Now, CurrentAppName = currentApp.AppName, NewAppLastUpdatedOn = latestApp.LastUpdated, CurrentAppLastUpdatedOn = currentApp.LastUpdated, CurrentAppSteamFullPath = currentApp.Library.FullPath, NewAppSteamFullPath = latestApp.Library.FullPath }));
+                            }
+                        }
+                    }
+                }
+
+                await progressInformationMessage.CloseAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Fatal(ex);
             }
         }
     }

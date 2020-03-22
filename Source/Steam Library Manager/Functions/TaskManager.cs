@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Steam_Library_Manager.Definitions.Enums;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
+using Alphaleonis.Win32.Filesystem;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,66 +15,85 @@ namespace Steam_Library_Manager.Functions
 
         public static readonly ObservableCollection<Definitions.List.TaskInfo> TaskList = new ObservableCollection<Definitions.List.TaskInfo>();
         public static CancellationTokenSource CancellationToken;
-        public static bool Status, Paused, IsRestartRequired;
+        public static bool Status, Paused;
         public static Definitions.List.TaskInfo ActiveTask;
-        public static Definitions.List.TmInfo TMInfo { get; } = new Definitions.List.TmInfo();
+        public static Definitions.List.TmInfo TmInfo { get; } = new Definitions.List.TmInfo();
+        private static bool _isRestartRequired;
 
+        private static readonly IProgress<Definitions.List.TaskInfo> AddTaskProgress = new Progress<Definitions.List.TaskInfo>(task => TaskList.Add(task));
         private static readonly IProgress<Definitions.List.TaskInfo> RemoveTaskProgress = new Progress<Definitions.List.TaskInfo>(task => TaskList.Remove(task));
 
-        private static async Task ProcessTaskAsync(Definitions.List.TaskInfo CurrentTask)
+        private static async Task ProcessTaskAsync(Definitions.List.TaskInfo currentTask)
         {
             try
             {
                 TmInfoUpdate();
 
-                ActiveTask = CurrentTask;
-                CurrentTask.Active = true;
+                ActiveTask = currentTask;
+                currentTask.Active = true;
 
-                switch (CurrentTask.TaskType)
+                switch (currentTask.TaskType)
                 {
                     default:
-                        await CurrentTask.App.CopyFilesAsync(CurrentTask, CancellationToken.Token).ConfigureAwait(false);
+                        await currentTask.App.CopyFilesAsync(currentTask, CancellationToken.Token).ConfigureAwait(false);
                         break;
 
-                    case Definitions.Enums.TaskType.Delete:
-                        await CurrentTask.App.DeleteFilesAsync(CurrentTask).ConfigureAwait(false);
-                        CurrentTask.App.Library.Apps.Remove(CurrentTask.App);
+                    case TaskType.Delete:
+                        await currentTask.App.DeleteFilesAsync(currentTask).ConfigureAwait(false);
+                        currentTask.App.Library.Apps.Remove(currentTask.App);
                         break;
 
-                    case Definitions.Enums.TaskType.Compact:
-                        await CurrentTask.App.CompactTask(CurrentTask, CancellationToken.Token).ConfigureAwait(false);
+                    case TaskType.Compact:
+                        await currentTask.App.CompactTask(currentTask, CancellationToken.Token).ConfigureAwait(false);
                         break;
                 }
 
-                if (!CancellationToken.IsCancellationRequested && !CurrentTask.ErrorHappened)
+                if (!CancellationToken.IsCancellationRequested && !currentTask.ErrorHappened)
                 {
-                    if (CurrentTask.RemoveOldFiles && CurrentTask.TaskType != Definitions.Enums.TaskType.Delete && CurrentTask.TaskType != Definitions.Enums.TaskType.Compact)
+                    if (currentTask.RemoveOldFiles && currentTask.TaskType != TaskType.Delete && currentTask.TaskType != TaskType.Compact)
                     {
-                        Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(
-                            SLM.Translate(nameof(Properties.Resources.TaskManager_RemoveOldFiles)),
-                            new { CurrentTime = DateTime.Now, CurrentTask.App.AppName }));
-                        await CurrentTask.App.DeleteFilesAsync(CurrentTask).ConfigureAwait(false);
-                        CurrentTask.App.Library.Apps.Remove(CurrentTask.App);
-                        Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(
-                            SLM.Translate(nameof(Properties.Resources.TaskManager_RemoveOldFilesCompleted)),
-                            new { CurrentTime = DateTime.Now, CurrentTask.App.AppName }));
+                        Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.TaskManager_RemoveOldFiles)), new { CurrentTime = DateTime.Now, currentTask.App.AppName }));
+                        await currentTask.App.DeleteFilesAsync(currentTask).ConfigureAwait(false);
+                        currentTask.App.Library.Apps.Remove(currentTask.App);
+                        Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.TaskManager_RemoveOldFilesCompleted)), new { CurrentTime = DateTime.Now, currentTask.App.AppName }));
                     }
 
-                    if (CurrentTask.TargetLibrary?.Type == Definitions.Enums.LibraryType.Steam)
+                    if (currentTask.TargetLibrary?.Type == LibraryType.Steam)
                     {
-                        IsRestartRequired = true;
+                        _isRestartRequired = true;
                     }
 
-                    CurrentTask.TaskStatusInfo = SLM.Translate(nameof(Properties.Resources.TaskStatus_Completed));
-                    CurrentTask.Active = false;
-                    CurrentTask.Completed = true;
+                    currentTask.TaskStatusInfo = SLM.Translate(nameof(Properties.Resources.TaskStatus_Completed));
+                    currentTask.Active = false;
+                    currentTask.Completed = true;
 
-                    CurrentTask.TargetLibrary?.UpdateAppListAsync();
+                    currentTask.TargetLibrary?.UpdateAppList();
+
+                    if (currentTask.AutoInstall && !currentTask.Compress)
+                    {
+                        while (currentTask.TargetLibrary.IsUpdatingAppList)
+                        {
+                            await Task.Delay(100);
+                        }
+
+                        switch (currentTask.TargetLibrary.Type)
+                        {
+                            case LibraryType.Steam:
+                            case LibraryType.SLM:
+                                // Not available
+                                break;
+
+                            case LibraryType.Origin:
+                            case LibraryType.Uplay:
+                                currentTask.TargetLibrary.Apps.First(x => x.AppId == currentTask.App.AppId && x.IsCompressed == currentTask.Compress)?.InstallAsync();
+                                break;
+                        }
+                    }
 
                     // Update library details
-                    if (Definitions.SLM.CurrentSelectedLibrary == CurrentTask.App.Library)
+                    if (Definitions.SLM.CurrentSelectedLibrary == currentTask.App.Library)
                     {
-                        App.UpdateAppPanel(CurrentTask.App.Library);
+                        App.UpdateAppPanel(currentTask.App.Library);
                     }
                 }
 
@@ -83,7 +103,10 @@ namespace Steam_Library_Manager.Functions
                     {
                         if (!string.IsNullOrEmpty(Properties.Settings.Default.CustomSoundFile) && File.Exists(Properties.Settings.Default.CustomSoundFile))
                         {
-                            new System.Media.SoundPlayer(Properties.Settings.Default.CustomSoundFile).Play();
+                            using (var soundPlayer = new System.Media.SoundPlayer(Properties.Settings.Default.CustomSoundFile))
+                            {
+                                soundPlayer.Play();
+                            }
                         }
                         else
                         {
@@ -91,16 +114,16 @@ namespace Steam_Library_Manager.Functions
                         }
                     }
 
-                    if (IsRestartRequired)
+                    if (_isRestartRequired && !Properties.Settings.Default.TaskManager_SteamRestartSkip)
                     {
                         Steam.RestartSteamAsync();
-                        IsRestartRequired = false;
+                        _isRestartRequired = false;
                     }
                 }
 
-                if (Properties.Settings.Default.TaskManager_AutoClear && !CurrentTask.ErrorHappened)
+                if (Properties.Settings.Default.TaskManager_AutoClear && !currentTask.ErrorHappened)
                 {
-                    RemoveTaskProgress.Report(CurrentTask);
+                    RemoveTaskProgress.Report(currentTask);
                 }
 
                 SLM.Library.UpdateLibraryVisual();
@@ -153,20 +176,8 @@ namespace Steam_Library_Manager.Functions
             else if (Paused)
             {
                 Paused = false;
+                ActiveTask.Active = true;
                 ActiveTask.mre.Set();
-
-                Main.FormAccessor.TaskManagerView.Button_StartTaskManager.Dispatcher.Invoke(delegate
-                {
-                    Main.FormAccessor.TaskManagerView.Button_StartTaskManager.IsEnabled = false;
-                });
-                Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.Dispatcher.Invoke(delegate
-                {
-                    Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.IsEnabled = true;
-                });
-                Main.FormAccessor.TaskManagerView.Button_StopTaskManager.Dispatcher.Invoke(delegate
-                {
-                    Main.FormAccessor.TaskManagerView.Button_StopTaskManager.IsEnabled = true;
-                });
             }
         }
 
@@ -174,26 +185,13 @@ namespace Steam_Library_Manager.Functions
         {
             try
             {
-                if (Status && ActiveTask != null)
-                {
-                    Main.FormAccessor.TaskManagerView.Button_StartTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_StartTaskManager.IsEnabled = true;
-                    });
-                    Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.IsEnabled = false;
-                    });
-                    Main.FormAccessor.TaskManagerView.Button_StopTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_StopTaskManager.IsEnabled = true;
-                    });
+                if (!Status || ActiveTask == null) return;
 
-                    Paused = true;
-                    ActiveTask.mre.Reset();
+                Paused = true;
+                ActiveTask.Active = false;
+                ActiveTask.mre.Reset();
 
-                    Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.TaskManager_Paused)), new { CurrentTime = DateTime.Now }));
-                }
+                Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(SLM.Translate(nameof(Properties.Resources.TaskManager_Paused)), new { CurrentTime = DateTime.Now }));
             }
             catch (Exception ex)
             {
@@ -205,28 +203,14 @@ namespace Steam_Library_Manager.Functions
         {
             try
             {
-                if (Status)
-                {
-                    Main.FormAccessor.TaskManagerView.Button_StartTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_StartTaskManager.IsEnabled = true;
-                    });
-                    Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_PauseTaskManager.IsEnabled = false;
-                    });
-                    Main.FormAccessor.TaskManagerView.Button_StopTaskManager.Dispatcher.Invoke(delegate
-                    {
-                        Main.FormAccessor.TaskManagerView.Button_StopTaskManager.IsEnabled = false;
-                    });
+                if (!Status) return;
 
-                    Status = false;
-                    Paused = false;
-                    CancellationToken.Cancel();
-                    IsRestartRequired = false;
-                    ActiveTask?.mre?.Set();
-                    TmInfoUpdate();
-                }
+                Status = false;
+                Paused = false;
+                CancellationToken.Cancel();
+                _isRestartRequired = false;
+                ActiveTask?.mre?.Set();
+                TmInfoUpdate();
             }
             catch (Exception ex)
             {
@@ -234,11 +218,11 @@ namespace Steam_Library_Manager.Functions
             }
         }
 
-        public static void AddTask(Definitions.List.TaskInfo Task)
+        public static void AddTask(Definitions.List.TaskInfo task)
         {
             try
             {
-                TaskList.Add(Task);
+                AddTaskProgress.Report(task);
 
                 TmInfoUpdate();
             }
@@ -264,9 +248,9 @@ namespace Steam_Library_Manager.Functions
 
         private static void TmInfoUpdate()
         {
-            TMInfo.PendingTasks = TaskList.Count(x => !x.Active && !x.Completed);
-            TMInfo.CompletedTasks = TaskList.Count(x => !x.Active && x.Completed);
-            TMInfo.TotalTasks = TaskList.Count;
+            TmInfo.PendingTasks = TaskList.Count(x => !x.Active && !x.Completed);
+            TmInfo.CompletedTasks = TaskList.Count(x => !x.Active && x.Completed);
+            TmInfo.TotalTasks = TaskList.Count;
         }
     }
 }

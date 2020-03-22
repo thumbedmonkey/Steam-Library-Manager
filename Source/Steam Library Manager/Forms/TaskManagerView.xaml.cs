@@ -11,9 +11,9 @@ namespace Steam_Library_Manager.Forms
     /// <summary>
     /// Interaction logic for TaskManagerView.xaml
     /// </summary>
-    public partial class TaskManagerView : UserControl
+    public partial class TaskManagerView
     {
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         public TaskManagerView() => InitializeComponent();
 
@@ -33,39 +33,36 @@ namespace Steam_Library_Manager.Forms
 
                     case "Pause":
                         Functions.TaskManager.Pause();
+                        Button_StartTaskManager.IsEnabled = true;
                         Button_PauseTaskManager.IsEnabled = false;
                         Button_StopTaskManager.IsEnabled = true;
                         break;
 
                     case "Stop":
                         Functions.TaskManager.Stop();
+                        Button_StartTaskManager.IsEnabled = true;
                         Button_PauseTaskManager.IsEnabled = false;
                         Button_StopTaskManager.IsEnabled = false;
                         break;
 
                     case "BackupUpdates":
                         Functions.Steam.Library.CheckForBackupUpdatesAsync();
+                        Functions.Origin.CheckForBackupUpdatesAsync();
+                        Functions.Uplay.CheckForBackupUpdatesAsync();
+                        Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.Steam_CheckForBackupUpdates_Completed)), new { CurrentTime = DateTime.Now }));
                         break;
 
                     case "ClearCompleted":
-                        if (Functions.TaskManager.TaskList.Count == 0)
+                        foreach (var currentTask in Functions.TaskManager.TaskList.Where(x => x.Completed).ToList())
                         {
-                            return;
-                        }
-
-                        foreach (Definitions.List.TaskInfo CurrentTask in Functions.TaskManager.TaskList.ToList())
-                        {
-                            if (CurrentTask.Completed)
-                            {
-                                Functions.TaskManager.TaskList.Remove(CurrentTask);
-                            }
+                            Functions.TaskManager.TaskList.Remove(currentTask);
                         }
                         break;
                 }
             }
             catch (Exception ex)
             {
-                logger.Fatal(ex);
+                Logger.Fatal(ex);
             }
         }
 
@@ -81,30 +78,30 @@ namespace Steam_Library_Manager.Forms
                 {
                     default:
 
-                        foreach (var CurrentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().ToList())
+                        foreach (var currentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().ToList())
                         {
-                            if (CurrentTask.Active && Functions.TaskManager.Status && !CurrentTask.Completed)
+                            if (currentTask.Active && Functions.TaskManager.Status && !currentTask.Completed)
                             {
-                                await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.TM_TaskActiveError)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TM_TaskActiveErrorMessage)), new { CurrentTask.App?.AppName })).ConfigureAwait(true);
+                                await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.TM_TaskActiveError)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TM_TaskActiveErrorMessage)), new { currentTask.App?.AppName })).ConfigureAwait(true);
                             }
                             else
                             {
-                                Functions.TaskManager.RemoveTask(CurrentTask);
+                                Functions.TaskManager.RemoveTask(currentTask);
                             }
                         }
                         break;
 
                     case "ToggleCompress":
-                        foreach (var CurrentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().Where(x => x.TaskType == Definitions.Enums.TaskType.Copy || x.TaskType == Definitions.Enums.TaskType.Compress).ToList())
+                        foreach (var currentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().Where(x => x.TaskType == Definitions.Enums.TaskType.Copy || x.TaskType == Definitions.Enums.TaskType.Compress).ToList())
                         {
-                            CurrentTask.Compress = !CurrentTask.Compress;
+                            currentTask.Compress = !currentTask.Compress;
                         }
                         break;
 
                     case "ToggleRemoveFiles":
-                        foreach (var CurrentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().Where(x => x.TaskType == Definitions.Enums.TaskType.Copy || x.TaskType == Definitions.Enums.TaskType.Compress).ToList())
+                        foreach (var currentTask in TaskPanel.SelectedItems?.OfType<Definitions.List.TaskInfo>().Where(x => x.TaskType == Definitions.Enums.TaskType.Copy || x.TaskType == Definitions.Enums.TaskType.Compress).ToList())
                         {
-                            CurrentTask.RemoveOldFiles = !CurrentTask.RemoveOldFiles;
+                            currentTask.RemoveOldFiles = !currentTask.RemoveOldFiles;
                         }
                         break;
                 }
@@ -112,7 +109,7 @@ namespace Steam_Library_Manager.Forms
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
-                logger.Fatal(ex);
+                Logger.Fatal(ex);
             }
         }
 
@@ -122,12 +119,12 @@ namespace Steam_Library_Manager.Forms
             {
                 if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2 && ((sender as Grid)?.DataContext as Definitions.List.TaskInfo)?.App.InstallationDirectory.Exists == true)
                 {
-                    Process.Start(((sender as Grid)?.DataContext as Definitions.List.TaskInfo)?.App.InstallationDirectory.FullName);
+                    Process.Start(((Definitions.List.TaskInfo)((Grid)sender)?.DataContext)?.App.InstallationDirectory.FullName);
                 }
             }
             catch (Exception ex)
             {
-                logger.Fatal(ex);
+                Logger.Fatal(ex);
             }
         }
 

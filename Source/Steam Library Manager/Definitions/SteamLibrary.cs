@@ -1,11 +1,17 @@
-﻿using MahApps.Metro.Controls.Dialogs;
+﻿using Dasync.Collections;
+using MahApps.Metro.Controls.Dialogs;
+using Steam_Library_Manager.Definitions.Enums;
 using System;
-using System.Collections.Async;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using DirectoryInfo = Alphaleonis.Win32.Filesystem.DirectoryInfo;
+using File = Alphaleonis.Win32.Filesystem.File;
+using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
+using Path = Alphaleonis.Win32.Filesystem.Path;
 
 namespace Steam_Library_Manager.Definitions
 {
@@ -21,9 +27,12 @@ namespace Steam_Library_Manager.Definitions
             DirectoryList.Add("Common", new DirectoryInfo(Path.Combine(DirectoryList["SteamApps"].FullName, "common")));
             DirectoryList.Add("Download", new DirectoryInfo(Path.Combine(DirectoryList["SteamApps"].FullName, "downloading")));
             DirectoryList.Add("Workshop", new DirectoryInfo(Path.Combine(DirectoryList["SteamApps"].FullName, "workshop")));
+
+            AllowedAppTypes.Add(LibraryType.Steam);
+            AllowedAppTypes.Add(LibraryType.SLM);
         }
 
-        public override async void UpdateAppListAsync()
+        public override async void UpdateAppList()
         {
             try
             {
@@ -42,7 +51,7 @@ namespace Steam_Library_Manager.Definitions
                     if (!DirectoryList["SteamApps"].Exists)
                     {
                         MessageBox.Show(Framework.StringFormat.Format(
-                            Functions.SLM.Translate(nameof(Properties.Resources.SteamLibrary_CantCreate)),
+                            Functions.SLM.Translate(nameof(Properties.Resources.SteamAppsFolderNotExists)),
                             new { SteamAppsFolderFullPath = DirectoryList["SteamApps"].FullName }));
                         return;
                     }
@@ -67,17 +76,17 @@ namespace Steam_Library_Manager.Definitions
                             // If key doesn't contains a child (value in acf file)
                             if (keyValReader.Children.Count == 0)
                             {
-                                if (Properties.Settings.Default.IgnoredJunks != null &&
-                                    Properties.Settings.Default.IgnoredJunks.Contains(acfFile.FullName))
+                                if (List.IgnoredJunkItems.Contains(acfFile.FullName))
                                 {
                                     return;
                                 }
-                                List.LCProgress.Report(new List.JunkInfo
+
+                                List.LcProgress.Report(new List.JunkInfo
                                 {
                                     FSInfo = new FileInfo(acfFile.FullName),
-                                    Size = acfFile.Length,
+                                    Size = Functions.FileSystem.FormatBytes(acfFile.Length),
                                     Library = this,
-                                    JunkReason = Functions.SLM.Translate(nameof(Properties.Resources.CorruptedAcfFile))
+                                    Tag = JunkType.CorruptedDataFile
                                 });
 
                                 return;
@@ -95,7 +104,7 @@ namespace Steam_Library_Manager.Definitions
                     .ParallelForEachAsync(async archive => { await Task.Run(() => Functions.App.ReadDetailsFromZip(archive, this)).ConfigureAwait(false); }).ConfigureAwait(false);
 
                 DirectoryList["SteamBackups"].Refresh();
-                if (Type == Enums.LibraryType.SLM && DirectoryList["SteamBackups"].Exists)
+                if (Type == LibraryType.SLM && DirectoryList["SteamBackups"].Exists)
                 {
                     await DirectoryList["SteamBackups"].EnumerateFiles("*.sis", SearchOption.AllDirectories).ParallelForEachAsync(
                         async skuFile =>
@@ -130,7 +139,7 @@ namespace Steam_Library_Manager.Definitions
 
                 IsUpdatingAppList = false;
             }
-            catch (UnauthorizedAccessException uaex)
+            catch (UnauthorizedAccessException ex)
             {
                 await Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(
                     async delegate
@@ -139,11 +148,11 @@ namespace Steam_Library_Manager.Definitions
                             Functions.SLM.Translate(nameof(Properties.Resources.UnauthorizedAccessException)),
                             Framework.StringFormat.Format(
                                 Functions.SLM.Translate(nameof(Properties.Resources.UnauthorizedAccessExceptionMessage)),
-                                new { FullPath, ExceptionMessage = uaex.Message })).ConfigureAwait(true);
+                                new { FullPath, ExceptionMessage = ex.Message })).ConfigureAwait(true);
                     }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(true);
                 IsUpdatingAppList = false;
             }
-            catch (DirectoryNotFoundException dnfex)
+            catch (DirectoryNotFoundException ex)
             {
                 await Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(
                     async delegate
@@ -152,7 +161,7 @@ namespace Steam_Library_Manager.Definitions
                                 Functions.SLM.Translate(nameof(Properties.Resources.DirectoryNotFoundException)),
                                 Framework.StringFormat.Format(
                                     Functions.SLM.Translate(nameof(Properties.Resources.DirectoryNotFoundExceptionMessage)),
-                                    new { FolderfullPath = FullPath, ExceptionMessage = dnfex.Message }))
+                                    new { FolderfullPath = FullPath, ExceptionMessage = ex.Message }))
                             .ConfigureAwait(true);
                     }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(true);
                 IsUpdatingAppList = false;
@@ -242,13 +251,13 @@ namespace Steam_Library_Manager.Definitions
                 var Key = new Framework.KeyValue();
 
                 // Read vdf file
-                Key.ReadFileAsText(Global.Steam.vdfFilePath);
+                Key.ReadFileAsText(Global.Steam.VdfFilePath);
 
                 // Change old library path with new one
                 Key["Software"]["Valve"]["Steam"].Children.Find(key => key.Value.Contains(FullPath)).Value = NewLibraryPath;
 
                 // Update config.vdf file with changes
-                Key.SaveToFile(Global.Steam.vdfFilePath, false);
+                Key.SaveToFile(Global.Steam.VdfFilePath, false);
 
                 // Since this file started to interrupt us?
                 // No need to bother with it since config.vdf is the real deal, just remove it and Steam client will handle with some magic.
@@ -301,38 +310,37 @@ namespace Steam_Library_Manager.Definitions
 
                 List.Libraries.Remove(this);
 
-                if (Type == Enums.LibraryType.Steam)
+                if (Type != LibraryType.Steam) return;
+
+                await Functions.Steam.CloseSteamAsync().ConfigureAwait(true);
+
+                // Make a KeyValue reader
+                var keyValReader = new Framework.KeyValue();
+
+                // Read vdf file
+                keyValReader.ReadFileAsText(Global.Steam.VdfFilePath);
+
+                // Remove old library
+                keyValReader["Software"]["Valve"]["Steam"].Children.RemoveAll(x => x.Value == FullPath);
+
+                var i = 1;
+                foreach (var key in keyValReader["Software"]["Valve"]["Steam"].Children.FindAll(x => x.Name.Contains("BaseInstallFolder")))
                 {
-                    await Functions.Steam.CloseSteamAsync().ConfigureAwait(true);
-
-                    // Make a KeyValue reader
-                    var keyValReader = new Framework.KeyValue();
-
-                    // Read vdf file
-                    keyValReader.ReadFileAsText(Global.Steam.vdfFilePath);
-
-                    // Remove old library
-                    keyValReader["Software"]["Valve"]["Steam"].Children.RemoveAll(x => x.Value == FullPath);
-
-                    var i = 1;
-                    foreach (var key in keyValReader["Software"]["Valve"]["Steam"].Children.FindAll(x => x.Name.Contains("BaseInstallFolder")))
-                    {
-                        key.Name = $"BaseInstallFolder_{i}";
-                        i++;
-                    }
-
-                    // Update libraryFolders.vdf file with changes
-                    keyValReader.SaveToFile(Global.Steam.vdfFilePath, false);
-
-                    // Since this file started to interrupt us?
-                    // No need to bother with it since config.vdf is the real deal, just remove it and Steam client will handle with some magic.
-                    if (File.Exists(Path.Combine(Properties.Settings.Default.steamInstallationPath, "steamapps", "libraryfolders.vdf")))
-                    {
-                        File.Delete(Path.Combine(Properties.Settings.Default.steamInstallationPath, "steamapps", "libraryfolders.vdf"));
-                    }
-
-                    Functions.Steam.RestartSteamAsync();
+                    key.Name = $"BaseInstallFolder_{i}";
+                    i++;
                 }
+
+                // Update libraryFolders.vdf file with changes
+                keyValReader.SaveToFile(Global.Steam.VdfFilePath, false);
+
+                // Since this file started to interrupt us?
+                // No need to bother with it since config.vdf is the real deal, just remove it and Steam client will handle with some magic.
+                if (File.Exists(Path.Combine(Properties.Settings.Default.steamInstallationPath, "steamapps", "libraryfolders.vdf")))
+                {
+                    File.Delete(Path.Combine(Properties.Settings.Default.steamInstallationPath, "steamapps", "libraryfolders.vdf"));
+                }
+
+                Functions.Steam.RestartSteamAsync();
             }
             catch (Exception ex)
             {
@@ -364,20 +372,19 @@ namespace Steam_Library_Manager.Definitions
                         var junk = new List.JunkInfo
                         {
                             FSInfo = dirInfo,
-                            Size = Functions.FileSystem.GetDirectorySize(dirInfo, true),
+                            Size = Functions.FileSystem.FormatBytes(Functions.FileSystem.GetDirectorySize(dirInfo, true)),
                             Library = this,
-                            JunkReason = Functions.SLM.Translate(nameof(Properties.Resources.HeadlessFolderNoCorrespondingAcfFile))
+                            Tag = JunkType.HeadlessFolder
                         };
 
-                        if (List.LcItems.Count(x => x.FSInfo.FullName == junk.FSInfo.FullName) == 0)
+                        if (List.JunkItems.Count(x => x.FSInfo.FullName == junk.FSInfo.FullName) == 0)
                         {
-                            if (Properties.Settings.Default.IgnoredJunks != null &&
-                                Properties.Settings.Default.IgnoredJunks.Contains(dirInfo.FullName))
+                            if (List.IgnoredJunkItems.Contains(dirInfo.FullName))
                             {
                                 continue;
                             }
 
-                            List.LCProgress.Report(junk);
+                            List.LcProgress.Report(junk);
                         }
                     }
                 }
@@ -394,19 +401,52 @@ namespace Steam_Library_Manager.Definitions
                             var junk = new List.JunkInfo
                             {
                                 FSInfo = fileDetails,
-                                Size = fileDetails.Length,
+                                Size = Functions.FileSystem.FormatBytes(fileDetails.Length),
                                 Library = this,
-                                JunkReason = Functions.SLM.Translate(nameof(Properties.Resources.HeadlessFileNoCorrespondingİnstallation))
+                                Tag = JunkType.HeadlessWorkshopFolder
                             };
 
-                            if (List.LcItems.Count(x => x.FSInfo.FullName == junk.FSInfo.FullName) == 0)
+                            if (List.JunkItems.Count(x => x.FSInfo.FullName == junk.FSInfo.FullName) == 0)
                             {
-                                if (Properties.Settings.Default.IgnoredJunks != null &&
-                                    Properties.Settings.Default.IgnoredJunks.Contains(fileDetails.FullName))
+                                if (List.IgnoredJunkItems.Contains(fileDetails.FullName))
                                 {
                                     continue;
                                 }
-                                List.LCProgress.Report(junk);
+                                List.LcProgress.Report(junk);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Fatal(ex);
+            }
+        }
+
+        public override void UpdateDupes()
+        {
+            try
+            {
+                while (IsUpdatingAppList)
+                {
+                    Task.Delay(5000);
+                }
+
+                foreach (var library in List.Libraries.Where(x => x.Type == LibraryType.Steam && x != this))
+                {
+                    foreach (var targetApp in library.Apps.Where(x => !x.IsCompressed))
+                    {
+                        foreach (var currentApp in Apps.Where(x => !x.IsCompressed && x.AppId == targetApp.AppId))
+                        {
+                            if (List.DupeItems.Count(x => (x.App1 == currentApp && x.App2 == targetApp) || x.App1 == targetApp && x.App2 == currentApp) == 0)
+                            {
+                                List.DupeItems.Add(new List.DupeInfo()
+                                {
+                                    App1 = currentApp,
+                                    App2 = targetApp,
+                                    Size = targetApp.PrettyGameSize,
+                                });
                             }
                         }
                     }

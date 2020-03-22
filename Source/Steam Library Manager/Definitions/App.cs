@@ -1,17 +1,22 @@
-﻿using FileCopyLib;
+﻿using Alphaleonis.Win32.Filesystem;
 using MahApps.Metro.Controls.Dialogs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using DirectoryInfo = Alphaleonis.Win32.Filesystem.DirectoryInfo;
+using File = Alphaleonis.Win32.Filesystem.File;
+using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
+using Path = Alphaleonis.Win32.Filesystem.Path;
 
 namespace Steam_Library_Manager.Definitions
 {
-    // TO-DO: Update translation resource keys
     public class App
     {
         protected readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
@@ -31,51 +36,62 @@ namespace Steam_Library_Manager.Definitions
         public bool IsCompressed { get; set; }
         public FileInfo CompressedArchivePath { get; set; }
 
-        public List<FrameworkElement> ContextMenuElements
+        public List<FrameworkElement> ContextMenuElements => _contextMenuElements ?? (_contextMenuElements = GenerateCMenuItems());
+
+        private List<FrameworkElement> GenerateCMenuItems()
         {
-            get
+            var rightClickMenu = new List<FrameworkElement>();
+            try
             {
-                var rightClickMenu = new List<FrameworkElement>();
-                try
+                foreach (var cItem in List.AppCMenuItems.Where(x => x.IsActive && x.AllowedLibraryTypes.Contains(Library.Type)))
                 {
-                    foreach (var cItem in List.AppCMenuItems.Where(x => x.IsActive && x.AllowedLibraryTypes.Contains(Library.Type)))
+                    if (!cItem.ShowToNormal)
                     {
-                        if (!cItem.ShowToNormal)
-                        {
-                            continue;
-                        }
-
-                        if (cItem.IsSeparator)
-                        {
-                            rightClickMenu.Add(new Separator());
-                        }
-                        else
-                        {
-                            var SLMItem = new MenuItem()
-                            {
-                                Header = Framework.StringFormat.Format(cItem.Header, new { AppName, AppId, SizeOnDisk = Functions.FileSystem.FormatBytes(SizeOnDisk) }),
-                                Tag = cItem.Action,
-                                Icon = Functions.FAwesome.GetAwesomeIcon(cItem.Icon, cItem.IconColor),
-                                HorizontalContentAlignment = HorizontalAlignment.Left,
-                                VerticalContentAlignment = VerticalAlignment.Center
-                            };
-
-                            SLMItem.Click += Main.FormAccessor.AppCMenuItem_Click;
-
-                            rightClickMenu.Add(SLMItem);
-                        }
+                        continue;
                     }
 
-                    return rightClickMenu;
-                }
-                catch (FormatException ex)
-                {
-                    MessageBox.Show(string.Format(Functions.SLM.Translate(nameof(Properties.Resources.AppInfoFormatException)), ex));
+                    if (this is SteamAppInfo appInfo && appInfo.IsSteamBackup && !cItem.ShowToSteamBackup)
+                    {
+                        continue;
+                    }
 
-                    return rightClickMenu;
+                    if (!cItem.ShowToCompressed && IsCompressed)
+                    {
+                        continue;
+                    }
+
+                    if (cItem.IsSeparator)
+                    {
+                        rightClickMenu.Add(new Separator());
+                    }
+                    else
+                    {
+                        var slmItem = new MenuItem()
+                        {
+                            Header = Framework.StringFormat.Format(cItem.Header, new { AppName, AppId, SizeOnDisk = Functions.FileSystem.FormatBytes(SizeOnDisk) }),
+                            Tag = cItem.Action,
+                            Icon = cItem.Icon,
+                            HorizontalContentAlignment = HorizontalAlignment.Left,
+                            VerticalContentAlignment = VerticalAlignment.Center
+                        };
+
+                        slmItem.Click += Main.FormAccessor.AppCMenuItem_Click;
+
+                        rightClickMenu.Add(slmItem);
+                    }
                 }
+
+                return rightClickMenu;
+            }
+            catch (FormatException ex)
+            {
+                MessageBox.Show(string.Format(Functions.SLM.Translate(nameof(Properties.Resources.AppInfoFormatException)), ex));
+
+                return rightClickMenu;
             }
         }
+
+        private List<FrameworkElement> _contextMenuElements;
 
         public virtual async void ParseMenuItemActionAsync(string action)
         {
@@ -89,7 +105,25 @@ namespace Steam_Library_Manager.Definitions
                             return;
                         }
 
-                        System.Diagnostics.Process.Start(string.Format(action, AppId, Properties.Settings.Default.SteamID64));
+                        Process.Start(string.Format(action, AppId, Properties.Settings.Default.SteamID64));
+                        break;
+
+                    case "verify":
+                        {
+                            Process.Start($@"steam://validate/{AppId}");
+                        }
+                        break;
+
+                    case "google":
+                        {
+                            Process.Start($@"https://www.google.com/search?q={Uri.EscapeUriString(AppName)}+pc");
+                        }
+                        break;
+
+                    case "youtube":
+                        {
+                            Process.Start($@"https://www.youtube.com/results?search_query={Uri.EscapeUriString(AppName)}+pc");
+                        }
                         break;
 
                     case "compress":
@@ -122,15 +156,16 @@ namespace Steam_Library_Manager.Definitions
 
                         if (InstallationDirectory.Exists)
                         {
-                            System.Diagnostics.Process.Start(InstallationDirectory.FullName);
+                            Process.Start(InstallationDirectory.FullName);
                         }
 
                         break;
 
                     case "deleteappfiles":
-                        await Task.Run(() => DeleteFilesAsync()).ConfigureAwait(false);
+                        await Task.Run(async () => await DeleteFilesAsync()).ConfigureAwait(true);
 
                         Library.Apps.Remove(this);
+
                         Functions.SLM.Library.UpdateLibraryVisual();
 
                         if (SLM.CurrentSelectedLibrary == Library)
@@ -182,7 +217,7 @@ namespace Steam_Library_Manager.Definitions
                         }
                     }
 
-                    foreach (var additionalFile in AdditionalFiles)
+                    foreach (var additionalFile in AdditionalFiles.ToList())
                     {
                         additionalFile.Refresh();
 
@@ -239,14 +274,14 @@ namespace Steam_Library_Manager.Definitions
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
+                Debug.WriteLine(ex);
                 Logger.Fatal(ex);
 
                 return false;
             }
         }
 
-        public async Task CompactTask(List.TaskInfo currentTask, System.Threading.CancellationToken cancellationToken)
+        public async Task CompactTask(List.TaskInfo currentTask, CancellationToken cancellationToken)
         {
             try
             {
@@ -254,10 +289,11 @@ namespace Steam_Library_Manager.Definitions
                 currentTask.TotalFileCount = appFiles.Count;
                 long totalFileSize = 0;
 
-                Parallel.ForEach(appFiles, file => System.Threading.Interlocked.Add(ref totalFileSize, file.Length));
+                Parallel.ForEach(appFiles, file => Interlocked.Add(ref totalFileSize, file.Length));
                 currentTask.TotalFileSize = totalFileSize;
 
-                ReportToTaskManager($"Current status of {AppName} is {(IsCompacted ? "compressed" : "not compressed")} and the task is set to {(currentTask.Compact ? "compress" : "uncompress")} the app.");
+                ReportToTaskManager($"Current status of {AppName} is {(IsCompacted ? "compacted" : "not compacted")} and the task is set to {(currentTask.Compact ? "compact" : "un-compact")} the app.");
+
                 currentTask.ElapsedTime.Start();
 
                 foreach (var file in appFiles)
@@ -266,7 +302,7 @@ namespace Steam_Library_Manager.Definitions
 
                     if (!file.Directory.Exists)
                     {
-                        ReportToTaskManager($"Directory doesn't exists !? - {file.Directory.FullName}");
+                        ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.CompactDirectoryNotExists)), new { DirectoryFullName = file.Directory.FullName }));
                     }
 
                     await CliWrap.Cli.Wrap("compact")
@@ -278,7 +314,7 @@ namespace Steam_Library_Manager.Definitions
                         .EnableStandardErrorValidation()
                         .ExecuteAsync().ConfigureAwait(false);
 
-                    Functions.TaskManager.ActiveTask.TaskStatusInfo = $"Compressing file: {file.FullName.Replace(InstallationDirectory.FullName, "")}";
+                    Functions.TaskManager.ActiveTask.TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.Compact_CompressingFile)), new { fileName = file.FullName.Replace(InstallationDirectory.FullName, "") });
                     currentTask.MovedFileSize += file.Length;
                 }
 
@@ -301,7 +337,7 @@ namespace Steam_Library_Manager.Definitions
 
                 currentTask.ElapsedTime.Stop();
 
-                ReportToTaskManager($"[{AppName}] Compact task completed in {currentTask.ElapsedTime.Elapsed}");
+                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.Compact_TaskCompletedIn)), new { AppName, TimeElapsed = currentTask.ElapsedTime.Elapsed }));
 
                 IsCompacted = await CompactStatus().ConfigureAwait(false);
             }
@@ -310,7 +346,10 @@ namespace Steam_Library_Manager.Definitions
                 if (!currentTask.ErrorHappened)
                 {
                     currentTask.ErrorHappened = true;
-                    Functions.TaskManager.Stop();
+
+                    if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                        Functions.TaskManager.Stop();
+
                     currentTask.Active = false;
                     currentTask.Completed = true;
 
@@ -321,7 +360,7 @@ namespace Steam_Library_Manager.Definitions
             catch (Exception ex)
             {
                 ReportToTaskManager(ex.ToString());
-                System.Diagnostics.Debug.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
 
@@ -333,8 +372,9 @@ namespace Steam_Library_Manager.Definitions
             ReportToTaskManager(progress);
         }
 
-        public async Task CopyFilesAsync(List.TaskInfo currentTask, System.Threading.CancellationToken cancellationToken)
+        public async Task CopyFilesAsync(List.TaskInfo currentTask, CancellationToken cancellationToken)
         {
+            var listLock = new object();
             ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.PopulatingFileList)), new { AppName }));
             Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.PopulatingFileList)), new { AppName }));
 
@@ -351,18 +391,31 @@ namespace Steam_Library_Manager.Definitions
                     CancellationToken = cancellationToken
                 };
 
-                Parallel.ForEach(appFiles, pOptions, file => System.Threading.Interlocked.Add(ref totalFileSize, file.Length));
+                Parallel.ForEach(appFiles, pOptions, file => Interlocked.Add(ref totalFileSize, file.Length));
 
                 currentTask.TotalFileSize = totalFileSize;
                 currentTask.ElapsedTime.Start();
 
-                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileListPopulated)), new { AppName, FileCount = appFiles.Count, TotalFileSize = Functions.FileSystem.FormatBytes(totalFileSize) }));
-                Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileListPopulated)), new { AppName, FileCount = appFiles.Count, TotalFileSize = Functions.FileSystem.FormatBytes(totalFileSize) }));
+                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileListPopulated)), new { AppName, FileCount = appFiles.Count, TotalFileSize = Functions.FileSystem.FormatBytes(totalFileSize) }), true);
 
                 // If the game is not compressed and user would like to compress it
-                if (!IsCompressed && Library.Type != Enums.LibraryType.Origin && (currentTask.Compress || currentTask.TaskType == Enums.TaskType.Compress))
+                if (!IsCompressed && (currentTask.Compress || currentTask.TaskType == Enums.TaskType.Compress))
                 {
-                    CompressedArchivePath = new FileInfo(Path.Combine(currentTask.TargetLibrary.DirectoryList["SteamApps"].FullName, AppId + ".zip"));
+                    switch (Library.Type)
+                    {
+                        case Enums.LibraryType.Steam:
+                        case Enums.LibraryType.SLM:
+                            CompressedArchivePath = new FileInfo(Path.Combine(currentTask.TargetLibrary.DirectoryList["SteamApps"].FullName, AppId + ".zip"));
+                            break;
+
+                        case Enums.LibraryType.Origin:
+                            CompressedArchivePath = new FileInfo(Path.Combine(currentTask.TargetLibrary.FullPath, AppId + ".zip"));
+                            break;
+
+                        case Enums.LibraryType.Uplay:
+                            CompressedArchivePath = new FileInfo(Path.Combine(currentTask.TargetLibrary.FullPath, AppName + ".zip"));
+                            break;
+                    }
 
                     CompressedArchivePath.Refresh();
 
@@ -372,10 +425,10 @@ namespace Steam_Library_Manager.Definitions
                         {
                             if (currentTask.ReportFileMovement)
                             {
-                                Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.SteamAppInfo_CompressedArchiveExistsAndInUse)), new { ArchiveFullPath = CompressedArchivePath.FullName }));
+                                Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.CompressedArchiveExistsAndInUse)), new { ArchiveFullPath = CompressedArchivePath.FullName }));
                             }
 
-                            await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
+                            await Task.Delay(1500, cancellationToken).ConfigureAwait(true);
                         }
 
                         CompressedArchivePath.Delete();
@@ -391,7 +444,20 @@ namespace Steam_Library_Manager.Definitions
                             {
                                 currentTask.mre.WaitOne();
 
-                                var fileNameInArchive = currentFile.FullName.Substring(Library.DirectoryList["SteamApps"].FullName.Length + 1);
+                                var fileNameInArchive = "";
+
+                                switch (Library.Type)
+                                {
+                                    case Enums.LibraryType.Steam:
+                                    case Enums.LibraryType.SLM:
+                                        fileNameInArchive = currentFile.FullName.Substring(Library.DirectoryList["SteamApps"].FullName.Length + 1);
+                                        break;
+
+                                    case Enums.LibraryType.Origin:
+                                    case Enums.LibraryType.Uplay:
+                                        fileNameInArchive = currentFile.FullName.Substring(Library.FullPath.Length);
+                                        break;
+                                }
 
                                 currentTask.TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_CompressingFile)), new { CurrentFileName = currentFile.Name, FileSize = Functions.FileSystem.FormatBytes(currentFile.Length) });
 
@@ -400,8 +466,7 @@ namespace Steam_Library_Manager.Definitions
 
                                 if (currentTask.ReportFileMovement)
                                 {
-                                    ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.SteamAppInfo_FileCompressed)), new { AppName, FileNameInArchive = fileNameInArchive }));
-                                    Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.SteamAppInfo_FileCompressed)), new { AppName, FileNameInArchive = fileNameInArchive }));
+                                    ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileCompressed)), new { AppName, FileNameInArchive = fileNameInArchive }), true);
                                 }
 
                                 if (cancellationToken.IsCancellationRequested)
@@ -413,17 +478,20 @@ namespace Steam_Library_Manager.Definitions
                         catch (FileNotFoundException ex)
                         {
                             currentTask.ErrorHappened = true;
-                            Functions.TaskManager.Stop();
+
+                            if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                                Functions.TaskManager.Stop();
+
                             currentTask.Active = false;
                             currentTask.Completed = true;
 
                             await Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                              {
-                                 if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.CompressArchive_FileNotFoundEx)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                                 if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.CompressArchive_FileNotFoundEx)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                                  {
-                                     Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                                     await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                                  }
-                             }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(false);
+                             }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(true);
 
                             Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.CompressArchive_FileNotFoundEx)), new { AppName, ExceptionMessage = ex.Message }));
                             Logger.Fatal(ex);
@@ -433,34 +501,53 @@ namespace Steam_Library_Manager.Definitions
                 // If the game is compressed and user would like to decompress it
                 else if (IsCompressed && (!currentTask.Compress || currentTask.TaskType == Enums.TaskType.Compress))
                 {
-                    foreach (var currentFile in ZipFile.OpenRead(CompressedArchivePath.FullName).Entries)
+                    using (var zipFileReader = ZipFile.OpenRead(CompressedArchivePath.FullName))
                     {
-                        currentTask.mre.WaitOne();
-
-                        var newFile = new FileInfo(Path.Combine(currentTask.TaskType == Enums.TaskType.Compress ? Library.DirectoryList["SteamApps"].FullName : currentTask.TargetLibrary.DirectoryList["SteamApps"].FullName, currentFile.FullName));
-
-                        if (!newFile.Directory.Exists)
+                        foreach (var currentFile in zipFileReader.Entries)
                         {
-                            newFile.Directory.Create();
-                            createdDirectories.Add(newFile.Directory.FullName);
-                        }
+                            currentTask.mre.WaitOne();
 
-                        currentTask.TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_Decompress)), new { NewFileName = newFile.FullName, NewFileSize = Functions.FileSystem.FormatBytes(currentFile.Length) });
+                            FileInfo newFile = null;
 
-                        currentFile.ExtractToFile(newFile.FullName, true);
+                            switch (Library.Type)
+                            {
+                                case Enums.LibraryType.Steam:
+                                case Enums.LibraryType.SLM:
+                                    newFile = new FileInfo(Path.Combine(currentTask.TaskType == Enums.TaskType.Compress ? Library.DirectoryList["SteamApps"].FullName : currentTask.TargetLibrary.DirectoryList["SteamApps"].FullName, currentFile.FullName));
+                                    break;
 
-                        copiedFiles.Add(newFile.FullName);
-                        currentTask.MovedFileSize += currentFile.Length;
+                                case Enums.LibraryType.Origin:
+                                case Enums.LibraryType.Uplay:
+                                    newFile = new FileInfo(Path.Combine(currentTask.TaskType == Enums.TaskType.Compress ? Library.FullPath : currentTask.TargetLibrary.FullPath, currentFile.FullName));
+                                    break;
+                            }
 
-                        if (currentTask.ReportFileMovement)
-                        {
-                            ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.SteamAppInfo_FileDecompressed)), new { AppName, NewFileFullPath = newFile.FullName }));
-                            Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.SteamAppInfo_FileDecompressed)), new { AppName, NewFileFullPath = newFile.FullName }));
-                        }
+                            if (!newFile.Directory.Exists)
+                            {
+                                newFile.Directory.Create();
 
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            throw new OperationCanceledException(cancellationToken);
+                                lock (listLock)
+                                {
+                                    createdDirectories.Add(newFile.Directory.FullName);
+                                }
+                            }
+
+                            currentTask.TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_Decompress)), new { NewFileName = newFile.FullName, NewFileSize = Functions.FileSystem.FormatBytes(currentFile.Length) });
+
+                            currentFile.ExtractToFile(newFile.FullName, true);
+
+                            copiedFiles.Add(newFile.FullName);
+                            currentTask.MovedFileSize += currentFile.Length;
+
+                            if (currentTask.ReportFileMovement)
+                            {
+                                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileDecompressed)), new { AppName, NewFileFullPath = newFile.FullName }), true);
+                            }
+
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                throw new OperationCanceledException(cancellationToken);
+                            }
                         }
                     }
                 }
@@ -475,13 +562,18 @@ namespace Steam_Library_Manager.Definitions
                         if (!newFile.Directory.Exists)
                         {
                             newFile.Directory.Create();
-                            createdDirectories.Add(newFile.Directory.FullName);
+
+                            lock (listLock)
+                            {
+                                createdDirectories.Add(newFile.Directory.FullName);
+                            }
                         }
                     });
-                    void CopyProgressCallback(FileProgress s) => OnFileProgress(s);
+
+                    var copyProgressCallback = new CopyMoveProgressRoutine(OnFileProgress);
                     pOptions.MaxDegreeOfParallelism = 1;
 
-                    Parallel.ForEach(appFiles.Where(x => !currentTask.ParallelFileTransfers || x.Length > Properties.Settings.Default.ParallelAfterSize * 1000000).OrderBy(x => x.DirectoryName).ThenByDescending(x => x.Length), pOptions, currentFile =>
+                    Parallel.ForEach(appFiles.Where(x => x.Length > Properties.Settings.Default.ParallelAfterSize * 1000000).OrderBy(x => x.DirectoryName).ThenByDescending(x => x.Length), pOptions, currentFile =>
                     {
                         try
                         {
@@ -489,60 +581,39 @@ namespace Steam_Library_Manager.Definitions
 
                             if (!newFile.Exists || (newFile.Length != currentFile.Length || newFile.LastWriteTime != currentFile.LastWriteTime))
                             {
-                                FileCopier.CopyWithProgress(currentFile.FullName, newFile.FullName, CopyProgressCallback);
+                                File.Copy(currentFile.FullName, newFile.FullName, CopyOptions.None, true, copyProgressCallback, currentTask);
                                 currentTask.MovedFileSize += currentFile.Length;
-                                newFile.LastWriteTime = currentFile.LastWriteTime;
-                                newFile.LastAccessTime = currentFile.LastAccessTime;
-                                newFile.CreationTime = currentFile.CreationTime;
                             }
                             else
                             {
                                 currentTask.MovedFileSize += newFile.Length;
                             }
 
-                            copiedFiles.Add(newFile.FullName);
+                            lock (listLock)
+                            {
+                                copiedFiles.Add(newFile.FullName);
+                            }
 
                             if (currentTask.ReportFileMovement)
                             {
-                                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }));
+                                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }), true);
                             }
-
-                            Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }));
-                        }
-                        catch (System.ComponentModel.Win32Exception)
-                        {
-                            throw new OperationCanceledException(cancellationToken);
-                        }
-                        catch (PathTooLongException ex)
-                        {
-                            currentTask.ErrorHappened = true;
-                            Functions.TaskManager.Stop();
-                            currentTask.Active = false;
-                            currentTask.Completed = true;
-
-                            Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
-                            {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.PathTooLongException)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
-                                {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
-                                }
-                            }, System.Windows.Threading.DispatcherPriority.Normal);
-
-                            Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError)), new { AppName, ExceptionMessage = ex.Message }));
-                            Logger.Fatal(ex);
                         }
                         catch (IOException ex)
                         {
                             currentTask.ErrorHappened = true;
-                            Functions.TaskManager.Stop();
+
+                            if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                                Functions.TaskManager.Stop();
+
                             currentTask.Active = false;
                             currentTask.Completed = true;
 
                             Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                             {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError_DeleteMovedFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError_DeleteMovedFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                                 {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                                    await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                                 }
                             }, System.Windows.Threading.DispatcherPriority.Normal);
 
@@ -552,17 +623,14 @@ namespace Steam_Library_Manager.Definitions
                         catch (UnauthorizedAccessException ex)
                         {
                             Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
-                            {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FilePermissionRelatedError_DeleteFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
-                                {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
-                                }
-                            }, System.Windows.Threading.DispatcherPriority.Normal);
+                              {
+                                  if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FilePermissionRelatedError_DeleteFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
+                                  {
+                                      await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
+                                  }
+                              }, System.Windows.Threading.DispatcherPriority.Normal);
                         }
                     });
-
-                    if (!currentTask.ParallelFileTransfers)
-                        goto TaskEnd;
 
                     pOptions.MaxDegreeOfParallelism = Environment.ProcessorCount;
 
@@ -574,60 +642,39 @@ namespace Steam_Library_Manager.Definitions
 
                             if (!newFile.Exists || (newFile.Length != currentFile.Length || newFile.LastWriteTime != currentFile.LastWriteTime))
                             {
-                                FileCopier.CopyWithProgress(currentFile.FullName, newFile.FullName, CopyProgressCallback);
+                                File.Copy(currentFile.FullName, newFile.FullName, CopyOptions.None, true, copyProgressCallback, currentTask);
                                 currentTask.MovedFileSize += currentFile.Length;
-                                newFile.LastWriteTime = currentFile.LastWriteTime;
-                                newFile.LastAccessTime = currentFile.LastAccessTime;
-                                newFile.CreationTime = currentFile.CreationTime;
                             }
                             else
                             {
                                 currentTask.MovedFileSize += newFile.Length;
                             }
 
-                            copiedFiles.Add(newFile.FullName);
+                            lock (listLock)
+                            {
+                                copiedFiles.Add(newFile.FullName);
+                            }
 
                             if (currentTask.ReportFileMovement)
                             {
-                                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }));
+                                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }), true);
                             }
-
-                            Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileMoved)), new { AppName, NewFileName = newFile.FullName }));
-                        }
-                        catch (System.ComponentModel.Win32Exception)
-                        {
-                            throw new OperationCanceledException(cancellationToken);
-                        }
-                        catch (PathTooLongException ex)
-                        {
-                            currentTask.ErrorHappened = true;
-                            Functions.TaskManager.Stop();
-                            currentTask.Active = false;
-                            currentTask.Completed = true;
-
-                            Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
-                            {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.PathTooLongException)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
-                                {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
-                                }
-                            }, System.Windows.Threading.DispatcherPriority.Normal);
-
-                            Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError)), new { AppName, ExceptionMessage = ex.Message }));
-                            Logger.Fatal(ex);
                         }
                         catch (IOException ex)
                         {
                             currentTask.ErrorHappened = true;
-                            Functions.TaskManager.Stop();
+
+                            if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                                Functions.TaskManager.Stop();
+
                             currentTask.Active = false;
                             currentTask.Completed = true;
 
                             Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                             {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError_DeleteMovedFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FileSystemRelatedError_DeleteMovedFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                                 {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                                    await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                                 }
                             }, System.Windows.Threading.DispatcherPriority.Normal);
 
@@ -638,79 +685,96 @@ namespace Steam_Library_Manager.Definitions
                         {
                             Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                             {
-                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FilePermissionRelatedError_DeleteFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                                if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.FilePermissionRelatedError_DeleteFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                                 {
-                                    Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                                    await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                                 }
                             }, System.Windows.Threading.DispatcherPriority.Normal);
                         }
                     });
                 }
 
-            TaskEnd:
-
                 currentTask.ElapsedTime.Stop();
                 currentTask.MovedFileSize = totalFileSize;
 
-                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCompleted)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed, AverageSpeed = GetElapsedTimeAverage(totalFileSize, currentTask.ElapsedTime.Elapsed.TotalSeconds), AverageFileSize = Functions.FileSystem.FormatBytes(totalFileSize / (long)currentTask.TotalFileCount) }));
-                Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCompleted)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed, AverageSpeed = GetElapsedTimeAverage(totalFileSize, currentTask.ElapsedTime.Elapsed.TotalSeconds), AverageFileSize = Functions.FileSystem.FormatBytes(totalFileSize / (long)currentTask.TotalFileCount) }));
+                ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCompleted)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed, AverageSpeed = GetElapsedTimeAverage(totalFileSize, currentTask.ElapsedTime.Elapsed.TotalSeconds), AverageFileSize = Functions.FileSystem.FormatBytes(totalFileSize / currentTask.TotalFileCount) }), true);
             }
             catch (OperationCanceledException)
             {
                 if (!currentTask.ErrorHappened)
                 {
                     currentTask.ErrorHappened = true;
-                    Functions.TaskManager.Stop();
+
+                    if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                        Functions.TaskManager.Stop();
+
                     currentTask.Active = false;
                     currentTask.Completed = true;
 
                     await Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                     {
-                        if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCancelled_RemoveFiles)), new { AppName }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                        if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCancelled_RemoveFiles)), new { AppName }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                         {
-                            Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                            await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                         }
-                    }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(false);
+                    }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(true);
 
-                    ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCancelled_ElapsedTime)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed }));
-                    Logger.Info(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCancelled_ElapsedTime)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed }));
+                    ReportToTaskManager(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskCancelled_ElapsedTime)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed }), true);
                 }
             }
             catch (Exception ex)
             {
                 currentTask.ErrorHappened = true;
-                Functions.TaskManager.Stop();
+
+                if (!Properties.Settings.Default.TaskManager_ContinueOnError)
+                    Functions.TaskManager.Stop();
+
                 currentTask.Active = false;
                 currentTask.Completed = true;
 
                 await Main.FormAccessor.AppView.AppPanel.Dispatcher.Invoke(async delegate
                  {
-                     if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.AnyException_RemoveFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(false) == MessageDialogResult.Affirmative)
+                     if (await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.RemoveMovedFiles)), Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.AnyException_RemoveFiles)), new { AppName, ExceptionMessage = ex.Message }), MessageDialogStyle.AffirmativeAndNegative).ConfigureAwait(true) == MessageDialogResult.Affirmative)
                      {
-                         Functions.FileSystem.RemoveGivenFiles(copiedFiles, createdDirectories, currentTask);
+                         await Functions.FileSystem.RemoveGivenFilesAsync(copiedFiles, createdDirectories, currentTask);
                      }
-                 }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(false);
+                 }, System.Windows.Threading.DispatcherPriority.Normal).ConfigureAwait(true);
 
                 Main.FormAccessor.TmLogs.Report(Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.AnyError_ElapsedTime)), new { AppName, ElapsedTime = currentTask.ElapsedTime.Elapsed }));
                 Logger.Fatal(ex);
             }
         }
 
-        private void OnFileProgress(FileProgress s)
+        private CopyMoveProgressResult OnFileProgress(long totalFileSize, long totalBytesTransferred, long streamSize,
+            long streamBytesTransferred, int streamNumber, CopyMoveProgressCallbackReason callbackReason, object userData)
         {
-            Functions.TaskManager.ActiveTask.mre.WaitOne();
+            if (callbackReason == CopyMoveProgressCallbackReason.StreamSwitch)
+            {
+                return CopyMoveProgressResult.Continue;
+            }
+
+            ((List.TaskInfo)userData).mre.WaitOne();
 
             if (Functions.TaskManager.CancellationToken.IsCancellationRequested)
                 throw (new OperationCanceledException(Functions.TaskManager.CancellationToken.Token));
 
-            Functions.TaskManager.ActiveTask.TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_CopyingFile)), new { Percentage = s.Percentage.ToString("0.00"), TransferredBytes = s.Transferred, TotalBytes = s.Total });
+            var percentage = Convert.ToDouble(totalBytesTransferred, System.Globalization.CultureInfo.InvariantCulture) / totalFileSize * 100;
+
+            ((List.TaskInfo)userData).TaskStatusInfo = Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_CopyingFile)), new { Percentage = percentage, TransferredBytes = totalBytesTransferred, TotalBytes = totalFileSize });
+
+            return CopyMoveProgressResult.Continue;
         }
 
-        private void ReportToTaskManager(string message)
+        private void ReportToTaskManager(string message, bool log = false)
         {
             try
             {
                 Main.FormAccessor.TmLogs.Report($"[{DateTime.Now}] {message}");
+
+                if (log)
+                {
+                    Logger.Info(message);
+                }
             }
             catch (Exception ex)
             {
@@ -739,7 +803,7 @@ namespace Steam_Library_Manager.Definitions
 
                             if (currentTask.ReportFileMovement)
                             {
-                                ReportToTaskManager($"[{DateTime.Now}] [{AppName}] {Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_DeletingFile)), new { FileName = currentFile.Name, FormattedFileSize = Functions.FileSystem.FormatBytes(currentFile.Length) })}");
+                                ReportToTaskManager($"[{AppName}] {Framework.StringFormat.Format(Functions.SLM.Translate(nameof(Properties.Resources.TaskStatus_DeletingFile)), new { FileName = currentFile.Name, FormattedFileSize = Functions.FileSystem.FormatBytes(currentFile.Length) })}", true);
                             }
                         }
 
@@ -753,9 +817,15 @@ namespace Steam_Library_Manager.Definitions
                 });
 
                 InstallationDirectory.Refresh();
-                if (InstallationDirectory.Exists)
+                if (InstallationDirectory.Exists && !IsCompressed && InstallationDirectory.FullName.StartsWith(Library.FullPath, StringComparison.InvariantCultureIgnoreCase))
                 {
                     await Task.Run(() => InstallationDirectory.Delete(true));
+                }
+
+                foreach (var dupItem in List.DupeItems.ToList().Where(x =>
+                    x.App1 == this || x.App2 == this))
+                {
+                    List.DupeItemsRemove.Report(dupItem);
                 }
 
                 return true;

@@ -1,7 +1,8 @@
-﻿using AutoUpdaterDotNET;
+﻿using Alphaleonis.Win32.Filesystem;
+using AutoUpdaterDotNET;
 using MahApps.Metro.Controls.Dialogs;
+using System;
 using System.Diagnostics;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,20 +15,28 @@ namespace Steam_Library_Manager.Forms
     {
         public SettingsView() => InitializeComponent();
 
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         private void CheckForUpdates_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                AutoUpdater.Start(Definitions.Updater.VersionControlURL, Application.ResourceAssembly);
+                AutoUpdater.Start(Definitions.Updater.VersionControlUrl, Application.ResourceAssembly);
                 AutoUpdater.CheckForUpdateEvent += async args =>
                 {
                     if (!args.IsUpdateAvailable)
                     {
-                        await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.AutoUpdater)), Functions.SLM.Translate(nameof(Properties.Resources.Updater_LatestVersionMessage))).ConfigureAwait(false);
+                        await Main.FormAccessor
+                            .ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.AutoUpdater)),
+                                Functions.SLM.Translate(nameof(Properties.Resources.Updater_LatestVersionMessage)))
+                            .ConfigureAwait(true);
                     }
                 };
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
         }
 
         private void ViewLogsButton(object sender, RoutedEventArgs e)
@@ -51,15 +60,6 @@ namespace Steam_Library_Manager.Forms
                 }
 
                 await Main.FormAccessor.ShowMessageAsync(Functions.SLM.Translate(nameof(Properties.Resources.Forms_Settings_HeaderImageCache)), Functions.SLM.Translate(nameof(Properties.Resources.Forms_Settings_HeaderImageCacheMessage))).ConfigureAwait(false);
-            }
-            catch { }
-        }
-
-        private void DonateButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/RevoLand/Steam-Library-Manager/wiki/Donations") { CreateNoWindow = true });
             }
             catch { }
         }
