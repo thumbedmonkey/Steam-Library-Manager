@@ -38,7 +38,7 @@ namespace Steam_Library_Manager.Framework
 
                     if (string.IsNullOrEmpty(s))
                     {
-                        break;
+                        //break;
                     }
 
                     if (currentKey == null)
@@ -54,7 +54,7 @@ namespace Steam_Library_Manager.Framework
 
                     if (string.IsNullOrEmpty(s))
                     {
-                        break;
+                        //break;
                     }
 
                     if (wasConditional)
@@ -630,11 +630,11 @@ namespace Steam_Library_Manager.Framework
                     return ReadAsText(fs);
                 }
             }
-            catch (IOException)
+            catch (IOException x)
             {
                 return ReadFileAsText(filename);
             }
-            catch (Exception)
+            catch (Exception x)
             {
                 if (FirstTry)
                     return ReadFileAsText(filename);
