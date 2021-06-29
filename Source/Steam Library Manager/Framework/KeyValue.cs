@@ -65,14 +65,17 @@ namespace Steam_Library_Manager.Framework
                         s = ReadToken(out wasQuoted, out wasConditional);
                     }
 
-                    if (s.StartsWith("{") && !wasQuoted)
+                    if (s != null)
                     {
-                        // header is valid so load the file
-                        currentKey.RecursiveLoadFromBuffer(this);
-                    }
-                    else
-                    {
-                        throw new Exception("LoadFromBuffer: missing {");
+                        if (s.StartsWith("{") && !wasQuoted)
+                        {
+                            // header is valid so load the file
+                            currentKey.RecursiveLoadFromBuffer(this);
+                        }
+                        else
+                        {
+                            throw new Exception("LoadFromBuffer: missing {");
+                        }
                     }
 
                     currentKey = null;
